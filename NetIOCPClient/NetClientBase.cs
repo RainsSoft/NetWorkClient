@@ -147,8 +147,8 @@ namespace NetIOCPClient
                 return m_NoDelay;
             }
             set {
-                if (_tcpSock != null) {
-                    _tcpSock.NoDelay = value;
+                if (_tcpSocket != null) {
+                    _tcpSocket.NoDelay = value;
                 }
                 m_NoDelay = value;
             }
@@ -237,7 +237,7 @@ namespace NetIOCPClient
         /// The socket containing the TCP connection this client is using.
         /// 当前client使用的socket 连接
         /// </summary>
-        protected Socket _tcpSock = null;//new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        protected Socket _tcpSocket = null;//new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
         /// <summary>
         /// Pointer to the server this client is connected to.
@@ -283,8 +283,8 @@ namespace NetIOCPClient
         /// </summary>
         public IPAddress ClientAddress {
             get {
-                return (_tcpSock != null && _tcpSock.RemoteEndPoint != null) ?
-                    ((IPEndPoint)_tcpSock.RemoteEndPoint).Address : null;
+                return (_tcpSocket != null && _tcpSocket.RemoteEndPoint != null) ?
+                    ((IPEndPoint)_tcpSocket.RemoteEndPoint).Address : null;
             }
         }
 
@@ -294,8 +294,8 @@ namespace NetIOCPClient
         /// </summary>
         public int Port {
             get {
-                return (_tcpSock != null && _tcpSock.RemoteEndPoint != null) ?
-                    ((IPEndPoint)_tcpSock.RemoteEndPoint).Port : -1;
+                return (_tcpSocket != null && _tcpSocket.RemoteEndPoint != null) ?
+                    ((IPEndPoint)_tcpSocket.RemoteEndPoint).Port : -1;
             }
         }
 
@@ -313,15 +313,15 @@ namespace NetIOCPClient
         /// 当前tcp socket
         /// </summary>
         public Socket @Socket {
-            get { return _tcpSock; }
+            get { return _tcpSocket; }
             set {
-                if (_tcpSock != null && _tcpSock.Connected) {
-                    _tcpSock.Shutdown(SocketShutdown.Both);
-                    _tcpSock.Close();
+                if (_tcpSocket != null && _tcpSocket.Connected) {
+                    _tcpSocket.Shutdown(SocketShutdown.Both);
+                    _tcpSocket.Close();
                 }
 
                 if (value != null) {
-                    _tcpSock = value;
+                    _tcpSocket = value;
                 }
             }
         }
@@ -341,7 +341,7 @@ namespace NetIOCPClient
         /// 当前client socket的连接状态,true连接
         /// </summary>
         public bool IsConnected {
-            get { return _tcpSock != null && _tcpSock.Connected; }
+            get { return _tcpSocket != null && _tcpSocket.Connected; }
         }
         private bool m_Connected = false;
         #endregion
@@ -361,7 +361,7 @@ namespace NetIOCPClient
         ///  重新开始 异步TCP 接收数据
         /// </summary>
         private void ResumeReceive() {  //内部循环调用? 
-            if (_tcpSock != null && _tcpSock.Connected) {
+            if (_tcpSocket != null && _tcpSocket.Connected) {
                 SocketAsyncEventArgs socketArgs = SocketHelpers.AcquireSocketArg();
                 int offset = this._offset + this._remainingLength;
 
@@ -369,13 +369,13 @@ namespace NetIOCPClient
                 socketArgs.UserToken = this;
                 socketArgs.Completed += ReceiveAsyncComplete;
 
-                bool willRaiseEvent = _tcpSock.ReceiveAsync(socketArgs);
+                bool willRaiseEvent = _tcpSocket.ReceiveAsync(socketArgs);
                 //返回结果：Type: System.Boolean
                 //如果 I/O 操作挂起，将返回 true。操作完成时，将引发 e 参数的 SocketAsyncEventArgs.Completed 事件。
                 //如果 I/O 操作同步完成，将返回 false。在这种情况下，将不会引发 e 参数的 SocketAsyncEventArgs.Completed 事件，并且可能在方法调用返回后立即检查作为参数传递的 e 对象以检索操作的结果。
 
                 if (!willRaiseEvent) {//返回false 命令还没有执行,直接处理？
-                    ReceiveAsyncComplete(_tcpSock, socketArgs);
+                    ReceiveAsyncComplete(_tcpSocket, socketArgs);
                 }
             }
         }
@@ -601,7 +601,7 @@ namespace NetIOCPClient
         /// <param name="length">长度大小有限制，不能超64K。The number of bytes to send starting at offset.</param>
         /// <param name="offset">The offset into packet where the sending begins.</param>
         public virtual void Send(byte[] packet, int offset, int length) {
-            if (_tcpSock != null && _tcpSock.Connected) {
+            if (_tcpSocket != null && _tcpSocket.Connected) {
                 var args = SocketHelpers.AcquireSocketArg();
                 if (args != null) {
                     args.Completed += SendAsyncComplete;
@@ -623,13 +623,13 @@ namespace NetIOCPClient
                     }
                     bool doResult = false;
                     try {
-                        doResult = _tcpSock.SendAsync(args);
+                        doResult = _tcpSocket.SendAsync(args);
                     }
                     catch {
                         int edoResult = 0;
                     }
-                    if (!doResult && _tcpSock != null) {
-                        SendAsyncComplete(_tcpSock, args);
+                    if (!doResult && _tcpSocket != null) {
+                        SendAsyncComplete(_tcpSocket, args);
                     }
                     unchecked {
                         _bytesSent += (uint)length;
@@ -638,7 +638,7 @@ namespace NetIOCPClient
                     Interlocked.Add(ref _totalBytesSent, length);
                 }
                 else {
-                    Logs.Error(string.Format("Client {0}'s SocketArgs are null", this._tcpSock.ToString()));
+                    Logs.Error(string.Format("Client {0}'s SocketArgs are null", this._tcpSocket.ToString()));
                 }
             }
         }
@@ -672,7 +672,7 @@ namespace NetIOCPClient
         /// </summary>
         /// <param name="packet"></param>
         protected void SendPacketImmediate(Packet packetdata) {
-            if (_tcpSock != null && _tcpSock.Connected) {
+            if (_tcpSocket != null && _tcpSocket.Connected) {
                 var args = SocketHelpers.AcquireSocketArg();
                 if (args != null) {
                     byte[] packet = packetdata.Buffer.Buffer.Array;
@@ -683,9 +683,9 @@ namespace NetIOCPClient
                     args.SetBuffer(packet, offset, length);
                     packetdata.Token = this;//可能使用的
                     args.UserToken = packetdata;//发送完即可回收包
-                    bool doResult = _tcpSock.SendAsync(args);
+                    bool doResult = _tcpSocket.SendAsync(args);
                     if (!doResult) {
-                        SendAsyncComplete(_tcpSock, args);
+                        SendAsyncComplete(_tcpSocket, args);
                     }
                     unchecked {
                         _bytesSent += (uint)length;
@@ -694,7 +694,7 @@ namespace NetIOCPClient
                     Interlocked.Add(ref _totalBytesSent, length);
                 }
                 else {
-                    Logs.Error(string.Format("Client {0}'s SocketArgs are null", this._tcpSock.ToString()));
+                    Logs.Error(string.Format("Client {0}'s SocketArgs are null", this._tcpSocket.ToString()));
                 }
             }
 
@@ -864,7 +864,7 @@ namespace NetIOCPClient
         internal SocketAsyncEventArgs ConnectEventArgs { get; private set; }
         void OnConnectCompleted(object sender, SocketAsyncEventArgs e) {
             isBeginConnect = false;
-            Socket Socket = _tcpSock;
+            Socket Socket = _tcpSocket;
             if (e.SocketError != SocketError.Success) {
                 if (e.AcceptSocket != Socket) {
                     Logs.Error("Socket 重复连接错误");
@@ -919,14 +919,23 @@ namespace NetIOCPClient
         /// <param name="port"></param>
         public void BeginConnect(string ip, int port) {
 
-            if (isBeginConnect && this._tcpSock != null) {
+            if (isBeginConnect && this._tcpSocket != null) {
                 Logs.Error("replace connecting...");
                 //已经处于连接状态，不能再连接
                 return;
             }
             isBeginConnect = true;
-            if (_tcpSock != null) {
-                _tcpSock.Close(1);
+            if (_tcpSocket != null) {
+                try {
+                    _tcpSocket.Shutdown(SocketShutdown.Both);
+                }
+                catch { 
+                }
+                try {
+                    _tcpSocket.Close(1);
+                }
+                catch { 
+                }
                 Thread.Sleep(100);
                 this.m_Connected = false;
             }
@@ -945,9 +954,9 @@ namespace NetIOCPClient
                 }
                 this.ServerEndPoint = new IPEndPoint(address, port);
                 ConnectEventArgs.RemoteEndPoint = this.ServerEndPoint;//new IPEndPoint(address, port);
-                bool doResult = _tcpSock.ConnectAsync(ConnectEventArgs);
+                bool doResult = _tcpSocket.ConnectAsync(ConnectEventArgs);
                 if (!doResult) {
-                    OnConnectCompleted(_tcpSock, ConnectEventArgs);
+                    OnConnectCompleted(_tcpSocket, ConnectEventArgs);
                 }
             }
             else {
@@ -963,12 +972,12 @@ namespace NetIOCPClient
         /// 初始化
         /// </summary>
         private void _InitSocket() {
-            this._tcpSock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _tcpSock.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, false);
-            _tcpSock.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, false);
+            this._tcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _tcpSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, false);
+            _tcpSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, false);
             LingerOption lo = new LingerOption(true, 5);
-            _tcpSock.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, lo);
-            _tcpSock.NoDelay = m_NoDelay;
+            _tcpSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, lo);
+            _tcpSocket.NoDelay = m_NoDelay;
             _offset = 0;
             _remainingLength = 0;
             this._bufferSegment.DecrementUsage();//回收
@@ -980,10 +989,21 @@ namespace NetIOCPClient
         /// </summary>
         public void DisConnect() {
             Status = ClientNetworkStatus.DisConnected;
-            if (_tcpSock != null) {
-                if (_tcpSock.Connected) {
-                    _tcpSock.Disconnect(true);
+            if (_tcpSocket != null) {
+                if (_tcpSocket.Connected) {
+                    try {
+                        _tcpSocket.Disconnect(true);
+                    }
+                    catch { }
+                    try {
+                        _tcpSocket.Shutdown(SocketShutdown.Both);
+                    }
+                    catch { 
+                    }
                 }
+                //断开连接时不要释放_tcpSocket
+                //因为可能在接收或发送数据中途移除需要断开，后续的操作可能还会用到_tcpSocket
+                //如果释放，可能会造成异常
                 // _tcpSock.Close();               
                 m_Connected = false;
                 //m_IsClosed = true;
@@ -1032,18 +1052,18 @@ namespace NetIOCPClient
             m_Connected = false;
             ClearSendAndRecivedQuene();
             _bufferSegment.DecrementUsage();
-            if (_tcpSock != null) {
+            if (_tcpSocket != null) {
                 try {
-                    if (_tcpSock.Connected) {
+                    if (_tcpSocket.Connected) {
                         LingerOption lo = new LingerOption(true, 2);
                         try {
-                            _tcpSock.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, lo);
+                            _tcpSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, lo);
                         }
                         catch { }
-                        _tcpSock.Shutdown(SocketShutdown.Both);
+                        _tcpSocket.Shutdown(SocketShutdown.Both);
                     }
-                    _tcpSock.Close();
-                    _tcpSock = null;
+                    _tcpSocket.Close();
+                    _tcpSocket = null;
                 }
                 catch (SocketException/* exception*/) {
                     // TODO: Check what exceptions we need to handle
