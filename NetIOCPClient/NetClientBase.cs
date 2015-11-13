@@ -753,6 +753,13 @@ namespace NetIOCPClient
                         //ProfInstance pi = Profile.StartProf();
                         OnRecvData(this, p);//引发数据包接收事件
                         //pi.EndProf(p.ToString(), 1f);
+                        //if (PacketHandles[p.PacketID] != null) {
+                        //    PacketHandles[p.PacketID](0L, p);
+                        //}
+                        //else {
+                        //    //Debug.Assert(false, p.ToString() + "没有相应的解析委托");
+                        //    Console.WriteLine("包" + p.PacketID + "没有相应的解析委托");
+                        //}
                     }
                 }
                 catch {

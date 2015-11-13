@@ -121,6 +121,7 @@
     <Compile Include="Util\IndentTextWriter.cs" />
     <Compile Include="Util\Lang.wp8.cs" />
     <Compile Include="Util\RandomEx.cs" />
+    <Compile Include="Util\ThreadPoolEx.cs" />
     <Compile Include="Util\Utility.cs" />
   </ItemGroup>
   <ItemGroup />
