@@ -23,11 +23,12 @@ namespace U3DNetWorkClient_Test
         /// </summary>
         [STAThread]
         static void Main() {
-            string fileName = "a/c/dd.txt";
-            string dirStr = new FileInfo(fileName).FullName;
-            DirectoryInfo dir = new DirectoryInfo(Path.GetDirectoryName(fileName));
-            Process thisProcess = Process.GetCurrentProcess();
-           
+            //string fileName = "a/c/dd.txt";
+            //string dirStr = new FileInfo(fileName).FullName;
+            //DirectoryInfo dir = new DirectoryInfo(Path.GetDirectoryName(fileName));
+            //Process thisProcess = Process.GetCurrentProcess();
+            NetIOCPClient.Log.Logs.AddConsoleAppender();
+
             Net_Client nc = new Net_Client();
             //121.40.174.130,12588
             //121.40.189.10,12588
@@ -86,6 +87,7 @@ namespace U3DNetWorkClient_Test
         }
 
         static void nc_OnRecvDataBytes(NetClientBase sender, BufferSegment recvData, int size) {
+            Console.WriteLine("Recived Data:");
             Console.WriteLine(NetIOCPClient.Util.Utility.ToHex(0, recvData.Buffer.Array, recvData.Offset, size));
         }
 
