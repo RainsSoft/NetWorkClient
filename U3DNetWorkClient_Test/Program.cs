@@ -61,13 +61,21 @@ namespace U3DNetWorkClient_Test
                 if (nc.IsConnected) {
                     nc.ProcessSendAndRecivedPackets();
                     if (sw.ElapsedMilliseconds > 1000 * 60) {
-                        Console.WriteLine("60秒接收数据："+nc.ReceivedBytes.ToString());
-                    
+                        Console.WriteLine("60秒接收数据：" + nc.ReceivedBytes.ToString());
+                        //
+                        Console.WriteLine(nc.GetNetworkInfo());
                         sw.Reset();
                         sw.Start();
-                        byte[] buf =Encoding.UTF8.GetBytes("hello");
-                        nc.Send(buf,0,buf.Length);
                     }
+                }
+                else { 
+                      System.Threading.Thread.Sleep(1000*5);
+                      nc.BeginConnect(ip, port);
+                      while (!nc.IsConnected) {
+
+                      }
+                      nc.Send(login, 0, login.Length);
+                      nc.StartHeatbeat();
                 }
                 System.Threading.Thread.Sleep(10);
                 
