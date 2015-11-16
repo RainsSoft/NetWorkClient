@@ -36,7 +36,7 @@ namespace NetIOCPClient.Log
         /// </summary>
         private static volatile bool s_IsLock;
 
-        #region IAppender 成员
+    #region IAppender 成员
 
         /// <summary>
         /// 写日志（可以多线程操作）
@@ -106,7 +106,7 @@ namespace NetIOCPClient.Log
             set { level = value; }
         }
 
-        #region zh-CHS 私有成员变量 | en Private Member Variables
+    #region zh-CHS 私有成员变量 | en Private Member Variables
         /// <summary>
         /// 
         /// </summary>
@@ -251,16 +251,14 @@ namespace NetIOCPClient.Log
         /// 写日志（可以多线程操作）
         /// </summary>
         /// <param name="info"></param>
-        public void Write(LogInfo info)
-        {
+        public void Write(LogInfo info) {
             //  日志过滤
             if (info.MessageFlag < level)
                 return;
 
             bool bIsLock = false;
 
-            lock (s_LockLogInfoQueue)
-            {
+            lock (s_LockLogInfoQueue) {
                 s_LogInfoQueue.Enqueue(info);
 
                 // 检测是否有其它的线程已在处理中，如在使用就退出，否则开始锁定
@@ -275,26 +273,22 @@ namespace NetIOCPClient.Log
 
             LogInfo[] logInfoArray;
 
-            do
-            {
+            do {
                 logInfoArray = null;
 
-                    lock (s_LockLogInfoQueue)
-                    {
-                        if (s_LogInfoQueue.Count > 0)
-                        {
-                            logInfoArray = s_LogInfoQueue.ToArray();
-                            s_LogInfoQueue.Clear();
-                        }
-                        else
-                            s_IsLock = false; // 没有数据需要处理,释放锁定让其它的程序来继续处理
+                lock (s_LockLogInfoQueue) {
+                    if (s_LogInfoQueue.Count > 0) {
+                        logInfoArray = s_LogInfoQueue.ToArray();
+                        s_LogInfoQueue.Clear();
                     }
+                    else
+                        s_IsLock = false; // 没有数据需要处理,释放锁定让其它的程序来继续处理
+                }
 
                 if (logInfoArray == null)
                     break;
 
-                for (int iIndex = 0; iIndex < logInfoArray.Length; iIndex++)
-                {
+                for (int iIndex = 0; iIndex < logInfoArray.Length; iIndex++) {
                     LogInfo logInfo = logInfoArray[iIndex];
 
                     if (logInfo.Parameter == null)
@@ -303,7 +297,7 @@ namespace NetIOCPClient.Log
                         InternalWriteLine(logInfo.MessageFlag, logInfo.Format, logInfo.Parameter);
                 }
 
-            } while (true);    
+            } while (true);
         }
 
         #endregion
@@ -316,8 +310,7 @@ namespace NetIOCPClient.Log
         /// <summary>
         /// 日志等级
         /// </summary>
-        public LogMessageType Level
-        {
+        public LogMessageType Level {
             get { return level; }
             set { level = value; }
         }
@@ -338,12 +331,10 @@ namespace NetIOCPClient.Log
         /// </summary>
         /// <param name="messageFlag"></param>
         /// <param name="strFormat"></param>
-        static void InternalWriteLine(LogMessageType messageFlag, string strFormat)
-        {
+        static void InternalWriteLine(LogMessageType messageFlag, string strFormat) {
             Debug.Write("\r");
 
-            switch (messageFlag)
-            {
+            switch (messageFlag) {
                 case LogMessageType.MSG_NONE: // direct printf replacement
                     Debug.Write("[NONE]: ");
                     break;
@@ -382,8 +373,7 @@ namespace NetIOCPClient.Log
 
                     break;
                 case LogMessageType.MSG_INPUT:
-                    if (s_strDosPrompt != string.Empty)
-                    {
+                    if (s_strDosPrompt != string.Empty) {
                         Debug.Write(s_strDosPrompt);
                     }
 
@@ -393,8 +383,7 @@ namespace NetIOCPClient.Log
 
             StringBuilder strStringBuilder = new StringBuilder();
 
-            if (messageFlag != LogMessageType.MSG_DOS_PROMPT)
-            {
+            if (messageFlag != LogMessageType.MSG_DOS_PROMPT) {
                 int iBlankLength = (s_strDosPrompt.Length + s_strInput.Length) - strFormat.Length;
                 for (int iIndex = 0; iIndex < iBlankLength; iIndex++)
                     strStringBuilder.Append(" ");
@@ -404,32 +393,25 @@ namespace NetIOCPClient.Log
 
             Debug.Write(strFormat + strStringBuilder);
 
-            if (messageFlag == LogMessageType.MSG_LOAD)
-            {
+            if (messageFlag == LogMessageType.MSG_LOAD) {
                 // none
             }
-            else if (messageFlag == LogMessageType.MSG_INPUT)
-            {
+            else if (messageFlag == LogMessageType.MSG_INPUT) {
                 // none
             }
-            else if (messageFlag == LogMessageType.MSG_DOS_PROMPT)
-            {
-                if (s_strInput != string.Empty)
-                {
+            else if (messageFlag == LogMessageType.MSG_DOS_PROMPT) {
+                if (s_strInput != string.Empty) {
                     Debug.Write(s_strInput);
                 }
             }
-            else
-            {
+            else {
                 Logs.Debug(" ");
 
-                if (s_strDosPrompt != string.Empty)
-                {
+                if (s_strDosPrompt != string.Empty) {
                     Debug.Write(s_strDosPrompt);
                 }
 
-                if (s_strInput != string.Empty)
-                {
+                if (s_strInput != string.Empty) {
                     Debug.Write(s_strInput);
                 }
             }
@@ -441,8 +423,7 @@ namespace NetIOCPClient.Log
         /// <param name="messageFlag"></param>
         /// <param name="strFormat"></param>
         /// <param name="arg"></param>
-        static void InternalWriteLine(LogMessageType messageFlag, string strFormat, params object[] arg)
-        {
+        static void InternalWriteLine(LogMessageType messageFlag, string strFormat, params object[] arg) {
             InternalWriteLine(messageFlag, string.Format(strFormat, arg));
         }
 

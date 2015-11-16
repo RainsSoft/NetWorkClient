@@ -21,7 +21,7 @@ using System.Threading;
 
 namespace NetIOCPClient.Util.Collections
 {
-   
+
     /// <summary>
     /// 不是什么情况都可以使用LockFreeDictionary的，不然你会得到相反的效果（性能很差）
     /// 这里假设读非常多，写非常非常少。 
@@ -393,7 +393,7 @@ namespace NetIOCPClient.Util.Collections
 
             // 不能总是获取最新的数据
             //bool localToken = false;
-           // m_LockCachedDictionary.Enter(ref localToken);
+            // m_LockCachedDictionary.Enter(ref localToken);
             Monitor.Enter(m_LockCachedDictionary);
             {
                 if (m_CachedDictionary == newDict) {

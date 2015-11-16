@@ -81,7 +81,7 @@ namespace NetIOCPClient.Core
                 m_statTimer = new Timer(OnTick);
             }
             catch (Exception e) {
-                Logs.Warn("Could not initialize Performance Counters."+ e.ToString());
+                Logs.Warn("Could not initialize Performance Counters." + e.ToString());
             }
         }
 
@@ -121,7 +121,7 @@ namespace NetIOCPClient.Core
             Process thisProcess = Process.GetCurrentProcess();
 
             //var processUptime =DateTime.Now - thisProcess.StartTime;
-            TimeSpan processUptime =new TimeSpan(Environment.TickCount*10000000);
+            TimeSpan processUptime = new TimeSpan(Environment.TickCount * 10000000);
             var totalBytesSent = TotalBytesSent;
             var totalBytesRcvd = TotalBytesReceived;
 
@@ -157,10 +157,10 @@ namespace NetIOCPClient.Core
 #if UNITY_WEBPLAYER
             statLines.Add(string.Format("+ cpu Count: {0} ", Environment.ProcessorCount));
 #else
-            statLines.Add(string.Format("+ Thread Count: {0} - GC Counts: {1}", thisProcess.Threads.Count, ToString(gcCounts,", ")));
+            statLines.Add(string.Format("+ Thread Count: {0} - GC Counts: {1}", thisProcess.Threads.Count, ToString(gcCounts, ", ")));
 #endif
         }
-        public static string ToString<T>( IEnumerable<T> collection, string conj) {
+        public static string ToString<T>(IEnumerable<T> collection, string conj) {
             string vals;
             if (collection != null) {
                 vals = string.Join(conj, ToStringArrT(collection));
@@ -186,14 +186,14 @@ namespace NetIOCPClient.Core
             return strs.ToArray();
         }
         public static string[] ToStringArrT<T>(IEnumerable<T> collection, Func<T, object> converter) {
-            
+
             List<string> strArr = new List<string>();
             var colEnum = collection.GetEnumerator();
             //var i = 0;
             while (colEnum.MoveNext()) {
                 var cur = colEnum.Current;
                 if (!Equals(cur, default(T))) {
-                    strArr.Add( (converter != null ? converter(cur) : cur).ToString());
+                    strArr.Add((converter != null ? converter(cur) : cur).ToString());
                 }
             }
             return strArr.ToArray();

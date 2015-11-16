@@ -325,8 +325,8 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         //private SpinLock m_LockCachedHashSet = new SpinLock();
-          private readonly object m_LockCachedHashSet=new  object();
-         
+        private readonly object m_LockCachedHashSet = new object();
+
         #endregion
 
         #region zh-CHS Ë½ÓÐ·½·¨ | en Private Methods

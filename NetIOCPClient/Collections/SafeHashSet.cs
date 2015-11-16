@@ -19,16 +19,14 @@ namespace NetIOCPClient.Util.Collections
         /// <summary>
         /// 
         /// </summary>
-        public SafeHashSet()
-        {
+        public SafeHashSet() {
         }
 
         /// <summary>
         /// 
         /// </summary>
-        public SafeHashSet( IEnumerable<KeyT> collection )
-        {
-            m_HashSet = new HashSet<KeyT>( collection );
+        public SafeHashSet(IEnumerable<KeyT> collection) {
+            m_HashSet = new HashSet<KeyT>(collection);
         }
         #endregion
 
@@ -37,8 +35,7 @@ namespace NetIOCPClient.Util.Collections
         /// <summary>
         /// 
         /// </summary>
-        public int Count
-        {
+        public int Count {
             get { return m_HashSet.Count; }
         }
 
@@ -60,11 +57,10 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="serial"></param>
         /// <param name="realm"></param>
-        public void Add( KeyT key )
-        {
+        public void Add(KeyT key) {
             m_LockHashSet.EnterWriteLock();
             {
-                m_HashSet.Add( key );
+                m_HashSet.Add(key);
 
                 m_bIsValueChange = true;
             }
@@ -76,12 +72,11 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="serial"></param>
         /// <param name="realm"></param>
-        public void AddRange( IEnumerable<KeyT> collection )
-        {
+        public void AddRange(IEnumerable<KeyT> collection) {
             m_LockHashSet.EnterWriteLock();
             {
-                foreach ( KeyT key in collection )
-                    m_HashSet.Add( key );
+                foreach (KeyT key in collection)
+                    m_HashSet.Add(key);
 
                 m_bIsValueChange = true;
             }
@@ -92,11 +87,10 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <param name="serial"></param>
-        public void Remove( KeyT key )
-        {
+        public void Remove(KeyT key) {
             m_LockHashSet.EnterWriteLock();
             {
-                if ( m_HashSet.Remove( key ) == true )
+                if (m_HashSet.Remove(key) == true)
                     m_bIsValueChange = true;
             }
             m_LockHashSet.ExitWriteLock();
@@ -106,11 +100,10 @@ namespace NetIOCPClient.Util.Collections
         /// 从当前 LockFreeHashSet 对象中移除指定集合中的所有元素。
         /// </summary>
         /// <param name="other"></param>
-        public void ExceptWith( IEnumerable<KeyT> other )
-        {
+        public void ExceptWith(IEnumerable<KeyT> other) {
             m_LockHashSet.EnterWriteLock();
             {
-                m_HashSet.ExceptWith( other );
+                m_HashSet.ExceptWith(other);
                 m_bIsValueChange = true;
             }
             m_LockHashSet.ExitWriteLock();
@@ -121,35 +114,32 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="match"></param>
         /// <returns></returns>
-        public int RemoveAll( Predicate<KeyT> match )
-        {
+        public int RemoveAll(Predicate<KeyT> match) {
             KeyT[] keyArray = this.ToArray();
-            if ( keyArray.Length <= 0 )
+            if (keyArray.Length <= 0)
                 return 0;
 
-            List<KeyT> removeList = new List<KeyT>( keyArray.Length );
+            List<KeyT> removeList = new List<KeyT>(keyArray.Length);
 
-            for ( int iIndex = 0; iIndex < keyArray.Length; iIndex++ )
-            {
+            for (int iIndex = 0; iIndex < keyArray.Length; iIndex++) {
                 KeyT key = keyArray[iIndex];
-                if ( match( key ) == true )
-                    removeList.Add( key );
+                if (match(key) == true)
+                    removeList.Add(key);
             }
 
-            if ( removeList.Count <= 0 )
+            if (removeList.Count <= 0)
                 return 0;
 
             int iRemoveCount = 0;
 
             m_LockHashSet.EnterWriteLock();
             {
-                foreach ( KeyT itemKey in removeList )
-                {
-                    if ( m_HashSet.Remove( itemKey ) == true )
+                foreach (KeyT itemKey in removeList) {
+                    if (m_HashSet.Remove(itemKey) == true)
                         iRemoveCount++;
                 }
 
-                if ( iRemoveCount > 0 )
+                if (iRemoveCount > 0)
                     m_bIsValueChange = true;
             }
             m_LockHashSet.ExitWriteLock();
@@ -162,13 +152,12 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public bool Contains( KeyT key )
-        {
+        public bool Contains(KeyT key) {
             bool bIsContains = false;
 
             m_LockHashSet.EnterReadLock();
             {
-                bIsContains = m_HashSet.Contains( key );
+                bIsContains = m_HashSet.Contains(key);
             }
             m_LockHashSet.ExitReadLock();
 
@@ -179,11 +168,10 @@ namespace NetIOCPClient.Util.Collections
         /// 修改当前的 LockFreeHashSet 对象，以仅包含该对象和指定集合中存在的元素。
         /// </summary>
         /// <param name="other"></param>
-        public void IntersectWith( IEnumerable<KeyT> other )
-        {
+        public void IntersectWith(IEnumerable<KeyT> other) {
             m_LockHashSet.EnterWriteLock();
             {
-                m_HashSet.IntersectWith( other );
+                m_HashSet.IntersectWith(other);
                 m_bIsValueChange = true;
             }
             m_LockHashSet.ExitWriteLock();
@@ -194,13 +182,12 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        public bool IsProperSubsetOf( IEnumerable<KeyT> other )
-        {
+        public bool IsProperSubsetOf(IEnumerable<KeyT> other) {
             bool bIsOK = false;
 
             m_LockHashSet.EnterReadLock();
             {
-                bIsOK = m_HashSet.IsProperSubsetOf( other );
+                bIsOK = m_HashSet.IsProperSubsetOf(other);
             }
             m_LockHashSet.ExitReadLock();
 
@@ -212,13 +199,12 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        public bool IsProperSupersetOf( IEnumerable<KeyT> other )
-        {
+        public bool IsProperSupersetOf(IEnumerable<KeyT> other) {
             bool bIsOK = false;
 
             m_LockHashSet.EnterReadLock();
             {
-                bIsOK = m_HashSet.IsProperSupersetOf( other );
+                bIsOK = m_HashSet.IsProperSupersetOf(other);
             }
             m_LockHashSet.ExitReadLock();
 
@@ -230,13 +216,12 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        public bool IsSubsetOf( IEnumerable<KeyT> other )
-        {
+        public bool IsSubsetOf(IEnumerable<KeyT> other) {
             bool bIsOK = false;
 
             m_LockHashSet.EnterReadLock();
             {
-                bIsOK = m_HashSet.IsSubsetOf( other );
+                bIsOK = m_HashSet.IsSubsetOf(other);
             }
             m_LockHashSet.ExitReadLock();
 
@@ -248,13 +233,12 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        public bool IsSupersetOf( IEnumerable<KeyT> other )
-        {
+        public bool IsSupersetOf(IEnumerable<KeyT> other) {
             bool bIsOK = false;
 
             m_LockHashSet.EnterReadLock();
             {
-                bIsOK = m_HashSet.IsSupersetOf( other );
+                bIsOK = m_HashSet.IsSupersetOf(other);
             }
             m_LockHashSet.ExitReadLock();
 
@@ -266,13 +250,12 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        public bool Overlaps( IEnumerable<KeyT> other )
-        {
+        public bool Overlaps(IEnumerable<KeyT> other) {
             bool bIsOK = false;
 
             m_LockHashSet.EnterReadLock();
             {
-                bIsOK = m_HashSet.Overlaps( other );
+                bIsOK = m_HashSet.Overlaps(other);
             }
             m_LockHashSet.ExitReadLock();
 
@@ -284,13 +267,12 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        public bool SetEquals( IEnumerable<KeyT> other )
-        {
+        public bool SetEquals(IEnumerable<KeyT> other) {
             bool bIsOK = false;
 
             m_LockHashSet.EnterReadLock();
             {
-                bIsOK = m_HashSet.SetEquals( other );
+                bIsOK = m_HashSet.SetEquals(other);
             }
             m_LockHashSet.ExitReadLock();
 
@@ -301,11 +283,10 @@ namespace NetIOCPClient.Util.Collections
         /// 修改当前的 LockFreeHashSet 对象，以仅包含该对象或指定集合中存在的元素（但不可同时包含两者中的元素）。
         /// </summary>
         /// <param name="other"></param>
-        public void SymmetricExceptWith( IEnumerable<KeyT> other )
-        {
+        public void SymmetricExceptWith(IEnumerable<KeyT> other) {
             m_LockHashSet.EnterWriteLock();
             {
-                m_HashSet.SymmetricExceptWith( other );
+                m_HashSet.SymmetricExceptWith(other);
                 m_bIsValueChange = true;
             }
             m_LockHashSet.ExitWriteLock();
@@ -315,11 +296,10 @@ namespace NetIOCPClient.Util.Collections
         /// 修改当前的 LockFreeHashSet 对象，以包含该对象本身和指定集合中存在的所有元素。
         /// </summary>
         /// <param name="other"></param>
-        public void UnionWith( IEnumerable<KeyT> other )
-        {
+        public void UnionWith(IEnumerable<KeyT> other) {
             m_LockHashSet.EnterWriteLock();
             {
-                m_HashSet.UnionWith( other );
+                m_HashSet.UnionWith(other);
                 m_bIsValueChange = true;
             }
             m_LockHashSet.ExitWriteLock();
@@ -328,8 +308,7 @@ namespace NetIOCPClient.Util.Collections
         /// <summary>
         /// 
         /// </summary>
-        public void Clear()
-        {
+        public void Clear() {
             m_LockHashSet.EnterWriteLock();
             {
                 m_HashSet.Clear();
@@ -362,20 +341,17 @@ namespace NetIOCPClient.Util.Collections
         /// <summary>
         /// 
         /// </summary>
-        private void InternalToCached()
-        {
-            if ( m_bIsValueChange == false )
+        private void InternalToCached() {
+            if (m_bIsValueChange == false)
                 return;
 
             m_LockHashSet.EnterReadLock();
             {
-                if ( m_bIsValueChange == true )
-                {
+                if (m_bIsValueChange == true) {
                     m_KeyArray = new KeyT[m_HashSet.Count];
 
                     int iIndex = 0;
-                    foreach ( KeyT keyValuePair in m_HashSet )
-                    {
+                    foreach (KeyT keyValuePair in m_HashSet) {
                         m_KeyArray[iIndex] = keyValuePair;
                         ++iIndex;
                     }
@@ -392,8 +368,7 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <returns></returns>
         //[MultiThreadedWarning( "zh-CHS", "当前的数组是列表临时产生的,不能保存数组用于以后操作:警告!" )]
-        public KeyT[] ToArray()
-        {
+        public KeyT[] ToArray() {
             InternalToCached();
 
             return m_KeyArray;
@@ -403,19 +378,16 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <returns></returns>
-        public KeyT[] ToArrayAndClear()
-        {
+        public KeyT[] ToArrayAndClear() {
             KeyT[] keyArray = s_ZeroArray;
 
             m_LockHashSet.EnterWriteLock();
             {
-                if ( m_bIsValueChange == true )
-                {
+                if (m_bIsValueChange == true) {
                     keyArray = new KeyT[m_HashSet.Count];
 
                     int iIndex = 0;
-                    foreach ( KeyT keyValuePair in m_HashSet )
-                    {
+                    foreach (KeyT keyValuePair in m_HashSet) {
                         keyArray[iIndex] = keyValuePair;
                         ++iIndex;
                     }
@@ -441,13 +413,12 @@ namespace NetIOCPClient.Util.Collections
         /// 等同于ToArray()
         /// </summary>
         /// <returns></returns>
-        public IEnumerator<KeyT> GetEnumerator()
-        {
+        public IEnumerator<KeyT> GetEnumerator() {
             KeyT[] tempKeyArray = this.ToArray();
-            if ( tempKeyArray == null )
+            if (tempKeyArray == null)
                 yield break;
 
-            for ( int iIndex = 0; iIndex < tempKeyArray.Length; iIndex++ )
+            for (int iIndex = 0; iIndex < tempKeyArray.Length; iIndex++)
                 yield return tempKeyArray[iIndex];
         }
 
@@ -455,8 +426,7 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <returns></returns>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
+        IEnumerator IEnumerable.GetEnumerator() {
             return GetEnumerator();
         }
         #endregion

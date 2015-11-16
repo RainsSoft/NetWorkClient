@@ -17,12 +17,10 @@ namespace NetIOCPClient.Serialize
         /// <typeparam name="T"></typeparam>
         /// <param name="xmlStr"></param>
         /// <returns></returns>
-        public static T XmlDeserialize<T>(this string xmlStr) where T:class
-        {
+        public static T XmlDeserialize<T>(this string xmlStr) where T : class {
             if (String.IsNullOrEmpty(xmlStr)) return null as T;
             var ser = new XmlSerializer(typeof(T));
-            using (var stream = new MemoryStream())
-            {
+            using (var stream = new MemoryStream()) {
                 var sw = new StreamWriter(stream);
                 sw.Write(xmlStr);
                 sw.Flush();
@@ -38,25 +36,21 @@ namespace NetIOCPClient.Serialize
         /// <param name="xmlStr"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static object XmlDeserialize(this string xmlStr, Type type)
-        {
-            try
-            {
+        public static object XmlDeserialize(this string xmlStr, Type type) {
+            try {
 
 
-            var ser = new XmlSerializer(type);
-            using (var stream = new MemoryStream())
-            {
-                var sw = new StreamWriter(stream);
-                sw.Write(xmlStr);
-                sw.Flush();
-                stream.Position = 0;
-                var obj = ser.Deserialize(stream);
-                return obj;
+                var ser = new XmlSerializer(type);
+                using (var stream = new MemoryStream()) {
+                    var sw = new StreamWriter(stream);
+                    sw.Write(xmlStr);
+                    sw.Flush();
+                    stream.Position = 0;
+                    var obj = ser.Deserialize(stream);
+                    return obj;
+                }
             }
-            }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 Logs.Error(string.Format("Deserialize {0} fail.xml={1} ex={2}", type.Name, xmlStr, ex.ToString()));
 
                 throw;
@@ -69,11 +63,9 @@ namespace NetIOCPClient.Serialize
         /// <typeparam name="T"></typeparam>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public static string XmlSerialize<T>(this T obj)
-        {
+        public static string XmlSerialize<T>(this T obj) {
             var ser = new XmlSerializer(typeof(T));
-            using (var stream = new MemoryStream())
-            {
+            using (var stream = new MemoryStream()) {
                 ser.Serialize(stream, obj);
                 stream.Position = 0;
                 var sr = new StreamReader(stream);

@@ -6,7 +6,7 @@ namespace NetIOCPClient.Core
     /// <summary>
     /// 组件管理器的实现模式
     /// </summary>
-    public class ComponentManager:IComponentManager
+    public class ComponentManager : IComponentManager
     {
         private readonly Dictionary<string, object> m_ComponentDictionary =
             new Dictionary<string, object>();
@@ -17,8 +17,7 @@ namespace NetIOCPClient.Core
         /// <typeparam name="T"></typeparam>
         /// <param name="componentId"></param>
         /// <param name="component"></param>
-        public void RegisterComponent<T>(string componentId, T component) where T : class
-        {
+        public void RegisterComponent<T>(string componentId, T component) where T : class {
             if (string.IsNullOrEmpty(componentId))
                 throw new ArgumentNullException("componentId");
 
@@ -34,8 +33,7 @@ namespace NetIOCPClient.Core
         /// <typeparam name="T"></typeparam>
         /// <param name="componentId"></param>
         /// <returns></returns>
-        public T GetComponent<T>(string componentId) where T : class
-        {
+        public T GetComponent<T>(string componentId) where T : class {
             if (string.IsNullOrEmpty(componentId))
                 throw new ArgumentNullException("componentId");
 
@@ -50,16 +48,14 @@ namespace NetIOCPClient.Core
         /// 释放组件资源
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        public void ReleaseComponent<T>()
-        {
+        public void ReleaseComponent<T>() {
             m_ComponentDictionary.Clear();
         }
 
         /// <summary>
         /// 清理所有数据（为GC用，注意使用场所）
         /// </summary>
-        public void Clear()
-        {
+        public void Clear() {
             m_ComponentDictionary.Clear();
         }
     }

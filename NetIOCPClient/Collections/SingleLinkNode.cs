@@ -16,9 +16,9 @@
 
 namespace NetIOCPClient.Util.Collections
 {
-	internal class SingleLinkNode<T>
-	{
-		public SingleLinkNode<T> Next;
-		public T Item;
-	}
+    internal class SingleLinkNode<T>
+    {
+        public SingleLinkNode<T> Next;
+        public T Item;
+    }
 }

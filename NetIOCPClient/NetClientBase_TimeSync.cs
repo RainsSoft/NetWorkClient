@@ -13,7 +13,7 @@ namespace NetIOCPClient
 
         #region 心跳包处理
         int HEATBEATTIME = 15;//15秒心跳一次
-        
+
 
         private Stopwatch m_HeatbeatTimer = new Stopwatch();
         private bool m_HeatBeatStart = false;
@@ -21,7 +21,7 @@ namespace NetIOCPClient
             if (m_HeatBeatStart && m_HeatbeatTimer.Elapsed.Seconds > HEATBEATTIME) {
                 //HeatbeatPacket p = Packet.GetPacket<HeatbeatPacket>(HeatbeatPacket._PacketID);
                 //HeatbeatPacket p = new HeatbeatPacket(true);
-               HeatbeatPacket p = this.PacketCreatorMgr.GetPacketCreator(HeatbeatPacket._PacketID).CreatePacket() as HeatbeatPacket;
+                HeatbeatPacket p = this.PacketCreatorMgr.GetPacketCreator(HeatbeatPacket._PacketID).CreatePacket() as HeatbeatPacket;
                 if (IsPrepareModel) {
                     //Send(0, p, true);
                 }
@@ -49,13 +49,13 @@ namespace NetIOCPClient
             m_HeatBeatStart = false;
             m_HeatbeatTimer.Stop();
             Logs.Info("StopHeatBeat");
-          
+
         }
         #endregion
 
         #region 时间同步
 
-        private readonly static int TimeSynInterval = 1000*30;//15秒进行一次时间同步
+        private readonly static int TimeSynInterval = 1000 * 30;//15秒进行一次时间同步
         private Stopwatch m_SynTimer = Stopwatch.StartNew();
         //private int m_TimeSynThreshold = 10;/
         //上一次执行同步的时刻.

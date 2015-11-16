@@ -84,7 +84,7 @@ namespace NetIOCPClient.Util
                                 cur.Value.Callback(cur.Value);
                             }
                             catch (Exception ee) {
-                                Logs.Error("TimerCall回调出错 name:" + cur.Value.Name+ee.ToString());
+                                Logs.Error("TimerCall回调出错 name:" + cur.Value.Name + ee.ToString());
                             }
                         }
                         if (cur.Value.CallType == TimerCallType.After) {

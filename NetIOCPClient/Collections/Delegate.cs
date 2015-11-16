@@ -11,7 +11,7 @@ namespace NetIOCPClient.Util.Collections
     /// <param name="key"></param>
     /// <param name="value"></param>
     /// <returns></returns>
-    public delegate bool Predicate<KEY, VALUE>( KEY key, VALUE value );
+    public delegate bool Predicate<KEY, VALUE>(KEY key, VALUE value);
     /// <summary>
     /// 
     /// </summary>
@@ -19,6 +19,6 @@ namespace NetIOCPClient.Util.Collections
     /// <typeparam name="VALUE"></typeparam>
     /// <param name="key"></param>
     /// <param name="value"></param>
-   // public delegate void Action<KEY, VALUE>( KEY key, VALUE value );
+    // public delegate void Action<KEY, VALUE>( KEY key, VALUE value );
     #endregion
 }

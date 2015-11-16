@@ -31,7 +31,7 @@ namespace NetIOCPClient.Network
     ///  包结构 ： 包ID(ushort)+包内容长度(ushort)
     ///  根据包结构 对接收到的数据进行解析或者发送
     /// </summary>
-    public abstract  class Packet : PacketBase
+    public abstract class Packet : PacketBase
     {
         /// <summary>
         /// 包长占字节数2
@@ -73,7 +73,8 @@ namespace NetIOCPClient.Network
             _initBuffer();
         }
         protected abstract void _initBuffer();
-        public Packet(ushort packetid):this() {
+        public Packet(ushort packetid)
+            : this() {
             m_PacketID = packetid;
         }
         //
@@ -139,7 +140,7 @@ namespace NetIOCPClient.Network
         //    return buf;
         //}
         public override string ToString() {
-            return string.Format("NetPacket({0})",PacketID);
+            return string.Format("NetPacket({0})", PacketID);
         }
         public override void Dispose() {
 
@@ -149,7 +150,7 @@ namespace NetIOCPClient.Network
         unsafe protected ushort ReadBegin(BufferSegment msg, ref int offset) {
             ushort packid = PacketHelper.Reader.ReadUShort(msg, ref offset);
             System.Diagnostics.Debug.Assert(packid == this.PacketID); //检验包ID是否正确            //
-            ushort len = PacketHelper.Reader.ReadUShort(msg, ref offset);         
+            ushort len = PacketHelper.Reader.ReadUShort(msg, ref offset);
             //this.BufLen = len + 4;
             this.DataLen = len;
             return len;
@@ -168,7 +169,7 @@ namespace NetIOCPClient.Network
         /// </summary>
         public unsafe abstract void Write();
         unsafe protected virtual void WriteBegin(BufferSegment buf, ref int offset) {
-            
+
             PacketHelper.Writer.WriteUShort(buf, ref offset, this.PacketID);
             //跳过两字节,留个空位用来保存包的总体长度
             offset += PACKETLENBYTES;
@@ -200,6 +201,8 @@ namespace NetIOCPClient.Network
             WriteOK = true;
 #endif
         }
+
+        //
 
     }
 

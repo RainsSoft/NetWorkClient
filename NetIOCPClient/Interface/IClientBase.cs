@@ -6,7 +6,7 @@ namespace NetIOCPClient.Core
 {
 	public interface IClient : IDisposable
 	{
-        //ServerBase Server  { get; }
+       
 
         /// <summary>
         /// Gets the IP address of the client.
@@ -23,7 +23,7 @@ namespace NetIOCPClient.Core
         /// </summary>
         //IPEndPoint UdpEndpoint { get;  set; }
         /// <summary>
-        /// 
+        ///the remote ip 
         /// </summary>
         IPEndPoint ServerEndPoint { get; }
         /// <summary>
@@ -38,17 +38,7 @@ namespace NetIOCPClient.Core
         /// </summary>
 		//void BeginReceive();
 
-		/// <summary>
-		/// Asynchronously sends a packet of data to the client.
-		/// </summary>
-		/// <param name="packet">An array of bytes containing the packet to be sent.</param>
-		//void Send(byte[] packet);
-
-		/// <summary>
-		/// Asynchronously sends a copy of the given packet
-		/// </summary>
-		/// <param name="packet">An array of bytes containing the packet to be sent.</param>
-		//void SendCopy(byte[] packet);
+	
 
         /// <summary>
         /// Asynchronously sends a packet of data to the client.

@@ -24,9 +24,8 @@ namespace NetIOCPClient.Util.Collections
             /// <summary>
             /// 
             /// </summary>
-            public ListPredicate( int iCapacity )
-            {
-                m_Data = new Dictionary<InternalT, InternalT>( iCapacity );
+            public ListPredicate(int iCapacity) {
+                m_Data = new Dictionary<InternalT, InternalT>(iCapacity);
             }
             #endregion
 
@@ -40,8 +39,7 @@ namespace NetIOCPClient.Util.Collections
             /// <summary>
             /// 
             /// </summary>
-            public Dictionary<InternalT, InternalT> Data
-            {
+            public Dictionary<InternalT, InternalT> Data {
                 get { return m_Data; }
             }
             #endregion
@@ -52,11 +50,10 @@ namespace NetIOCPClient.Util.Collections
             /// </summary>
             /// <param name="value"></param>
             /// <returns></returns>
-            public bool PredicateCallback( InternalT value )
-            {
-                InternalT outValue = default( InternalT );
+            public bool PredicateCallback(InternalT value) {
+                InternalT outValue = default(InternalT);
 
-                if ( m_Data.TryGetValue( value, out outValue ) == true )
+                if (m_Data.TryGetValue(value, out outValue) == true)
                     return true;
                 else
                     return false;
@@ -69,25 +66,22 @@ namespace NetIOCPClient.Util.Collections
         /// <summary>
         /// 
         /// </summary>
-        public SafeList()
-        {
+        public SafeList() {
         }
 
         /// <summary>
         /// 
         /// </summary>
-        public SafeList( IEnumerable<ValueT> collection )
-        {
-            m_List.AddRange( collection );
+        public SafeList(IEnumerable<ValueT> collection) {
+            m_List.AddRange(collection);
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="iCapacity"></param>
-        public SafeList( int iCapacity )
-        {
-            m_List = new List<ValueT>( iCapacity );
+        public SafeList(int iCapacity) {
+            m_List = new List<ValueT>(iCapacity);
         }
         #endregion
 
@@ -95,23 +89,19 @@ namespace NetIOCPClient.Util.Collections
         /// <summary>
         /// 
         /// </summary>
-        public int Count
-        {
+        public int Count {
             get { return m_List.Count; }
         }
 
         /// <summary>
         /// 
         /// </summary>
-        public int Capacity
-        {
+        public int Capacity {
             get { return m_List.Capacity; }
-            set
-            {
+            set {
                 m_LockList.EnterWriteLock();
                 {
-                    if ( m_List.Capacity < value )
-                    {
+                    if (m_List.Capacity < value) {
                         m_List.Capacity = value;
 
                         m_bIsValueChange = true;
@@ -126,11 +116,9 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
-        public ValueT this[int iIndex]
-        {
-            get
-            {
-                ValueT returnValue = default( ValueT );
+        public ValueT this[int iIndex] {
+            get {
+                ValueT returnValue = default(ValueT);
 
                 m_LockList.EnterReadLock();
                 {
@@ -140,8 +128,7 @@ namespace NetIOCPClient.Util.Collections
 
                 return returnValue;
             }
-            set
-            {
+            set {
                 m_LockList.EnterWriteLock();
                 {
                     m_List[iIndex] = value;
@@ -169,11 +156,10 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="serial"></param>
         /// <param name="realm"></param>
-        public void Add( ValueT value )
-        {
+        public void Add(ValueT value) {
             m_LockList.EnterWriteLock();
             {
-                m_List.Add( value );
+                m_List.Add(value);
 
                 m_bIsValueChange = true;
             }
@@ -184,11 +170,10 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <param name="collection"></param>
-        public void AddRange( IEnumerable<ValueT> collection )
-        {
+        public void AddRange(IEnumerable<ValueT> collection) {
             m_LockList.EnterWriteLock();
             {
-                m_List.AddRange( collection );
+                m_List.AddRange(collection);
 
                 m_bIsValueChange = true;
             }
@@ -199,11 +184,10 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <param name="serial"></param>
-        public void Remove( ValueT value )
-        {
+        public void Remove(ValueT value) {
             m_LockList.EnterWriteLock();
             {
-                if ( m_List.Remove( value ) == true )
+                if (m_List.Remove(value) == true)
                     m_bIsValueChange = true;
             }
             m_LockList.ExitWriteLock();
@@ -213,17 +197,16 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <param name="index"></param>
-        public void RemoveAt( int iIndex )
-        {
+        public void RemoveAt(int iIndex) {
             m_LockList.EnterWriteLock();
             {
                 int iBeforeCount = m_List.Count;
 
-                m_List.RemoveAt( iIndex );
+                m_List.RemoveAt(iIndex);
 
                 int iAfterCount = m_List.Count;
 
-                if ( iBeforeCount != iAfterCount )
+                if (iBeforeCount != iAfterCount)
                     m_bIsValueChange = true;
             }
             m_LockList.ExitWriteLock();
@@ -234,22 +217,20 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="match"></param>
         /// <returns></returns>
-        public int RemoveAll( Predicate<ValueT> match )
-        {
+        public int RemoveAll(Predicate<ValueT> match) {
             ValueT[] valueArray = this.ToArray();
-            if ( valueArray.Length <= 0 )
+            if (valueArray.Length <= 0)
                 return 0;
 
-            ListPredicate<ValueT> listPredicate = new ListPredicate<ValueT>( valueArray.Length );
+            ListPredicate<ValueT> listPredicate = new ListPredicate<ValueT>(valueArray.Length);
 
-            for ( int iIndex = 0; iIndex < valueArray.Length; iIndex++ )
-            {
+            for (int iIndex = 0; iIndex < valueArray.Length; iIndex++) {
                 ValueT itemT = valueArray[iIndex];
-                if ( match( itemT ) == true )
-                    listPredicate.Data.Add( itemT, itemT );
+                if (match(itemT) == true)
+                    listPredicate.Data.Add(itemT, itemT);
             }
 
-            if ( listPredicate.Data.Count <= 0 )
+            if (listPredicate.Data.Count <= 0)
                 return 0;
 
             int iRemoveCount = 0;
@@ -257,9 +238,9 @@ namespace NetIOCPClient.Util.Collections
             m_LockList.EnterWriteLock();
             {
                 // 内部处理速度比较快
-                iRemoveCount = m_List.RemoveAll( listPredicate.PredicateCallback );
+                iRemoveCount = m_List.RemoveAll(listPredicate.PredicateCallback);
 
-                if ( iRemoveCount > 0 )
+                if (iRemoveCount > 0)
                     m_bIsValueChange = true;
             }
             m_LockList.ExitWriteLock();
@@ -274,17 +255,16 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="index"></param>
         /// <param name="count"></param>
-        public void RemoveRange( int iIndex, int iCount )
-        {
+        public void RemoveRange(int iIndex, int iCount) {
             m_LockList.EnterWriteLock();
             {
                 int iBeforeCount = m_List.Count;
 
-                m_List.RemoveRange( iIndex, iCount );
+                m_List.RemoveRange(iIndex, iCount);
 
                 int iAfterCount = m_List.Count;
 
-                if ( iBeforeCount != iAfterCount )
+                if (iBeforeCount != iAfterCount)
                     m_bIsValueChange = true;
             }
             m_LockList.ExitWriteLock();
@@ -295,13 +275,12 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public bool Contains( ValueT value )
-        {
+        public bool Contains(ValueT value) {
             bool bIsContains = false;
 
             m_LockList.EnterReadLock();
             {
-                bIsContains = m_List.Contains( value );
+                bIsContains = m_List.Contains(value);
             }
             m_LockList.ExitReadLock();
 
@@ -313,11 +292,10 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="arrayT"></param>
         /// <param name="iArrayIndex"></param>
-        public void CopyTo( ValueT[] arrayT, int iArrayIndex )
-        {
+        public void CopyTo(ValueT[] arrayT, int iArrayIndex) {
             m_LockList.EnterReadLock();
             {
-                m_List.CopyTo( arrayT, iArrayIndex );
+                m_List.CopyTo(arrayT, iArrayIndex);
             }
             m_LockList.ExitReadLock();
         }
@@ -328,26 +306,24 @@ namespace NetIOCPClient.Util.Collections
         /// <typeparam name="TOutput"></typeparam>
         /// <param name="converter"></param>
         /// <returns></returns>
-        public SafeList<TOutput> ConvertAll<TOutput>( Converter<ValueT, TOutput> converter )
-        {
-            SafeList<TOutput> safeList = new SafeList<TOutput>( m_List.Count );
+        public SafeList<TOutput> ConvertAll<TOutput>(Converter<ValueT, TOutput> converter) {
+            SafeList<TOutput> safeList = new SafeList<TOutput>(m_List.Count);
 
             ValueT[] valueArray = this.ToArray();
-            if ( valueArray.Length <= 0 )
+            if (valueArray.Length <= 0)
                 return safeList;
 
-            List<TOutput> converterList = new List<TOutput>( valueArray.Length );
+            List<TOutput> converterList = new List<TOutput>(valueArray.Length);
 
-            for ( int iIndex = 0; iIndex < valueArray.Length; iIndex++ )
-            {
+            for (int iIndex = 0; iIndex < valueArray.Length; iIndex++) {
                 ValueT itemT = valueArray[iIndex];
-                converterList.Add( converter( itemT ) );
+                converterList.Add(converter(itemT));
             }
 
-            if ( converterList.Count <= 0 )
+            if (converterList.Count <= 0)
                 return safeList;
             else
-                safeList.AddRange( converterList );
+                safeList.AddRange(converterList);
 
             return safeList;
         }
@@ -357,19 +333,16 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="match"></param>
         /// <returns></returns>
-        public ValueT Find( Predicate<ValueT> match )
-        {
+        public ValueT Find(Predicate<ValueT> match) {
             ValueT[] valueArray = this.ToArray();
-            if ( valueArray.Length <= 0 )
-                return default( ValueT );
+            if (valueArray.Length <= 0)
+                return default(ValueT);
 
-            ValueT returnT = default( ValueT );
+            ValueT returnT = default(ValueT);
 
-            for ( int iIndex = 0; iIndex < valueArray.Length; iIndex++ )
-            {
+            for (int iIndex = 0; iIndex < valueArray.Length; iIndex++) {
                 ValueT itemT = valueArray[iIndex];
-                if ( match( itemT ) == true )
-                {
+                if (match(itemT) == true) {
                     returnT = itemT;
                     break;
                 }
@@ -383,27 +356,25 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="match"></param>
         /// <returns></returns>
-        public SafeList<ValueT> FindAll( Predicate<ValueT> match )
-        {
+        public SafeList<ValueT> FindAll(Predicate<ValueT> match) {
             SafeList<ValueT> safeList = new SafeList<ValueT>();
 
             ValueT[] valueArray = this.ToArray();
-            if ( valueArray.Length <= 0 )
+            if (valueArray.Length <= 0)
                 return safeList;
 
-            List<ValueT> list = new List<ValueT>( valueArray.Length );
+            List<ValueT> list = new List<ValueT>(valueArray.Length);
 
-            for ( int iIndex = 0; iIndex < valueArray.Length; iIndex++ )
-            {
+            for (int iIndex = 0; iIndex < valueArray.Length; iIndex++) {
                 ValueT itemT = valueArray[iIndex];
-                if ( match( itemT ) == true )
-                    list.Add( itemT );
+                if (match(itemT) == true)
+                    list.Add(itemT);
             }
 
-            if ( list.Count <= 0 )
+            if (list.Count <= 0)
                 return safeList;
             else
-                safeList.AddRange( list );
+                safeList.AddRange(list);
 
             return safeList;
         }
@@ -413,18 +384,15 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="match"></param>
         /// <returns></returns>
-        public ValueT FindLast( Predicate<ValueT> match )
-        {
+        public ValueT FindLast(Predicate<ValueT> match) {
             ValueT[] valueArray = this.ToArray();
-            if ( valueArray.Length <= 0 )
-                return default( ValueT );
+            if (valueArray.Length <= 0)
+                return default(ValueT);
 
-            ValueT returnT = default( ValueT );
+            ValueT returnT = default(ValueT);
 
-            for ( int iIndex = valueArray.Length - 1; iIndex >= 0; iIndex-- )
-            {
-                if ( match( valueArray[iIndex] ) == true )
-                {
+            for (int iIndex = valueArray.Length - 1; iIndex >= 0; iIndex--) {
+                if (match(valueArray[iIndex]) == true) {
                     returnT = valueArray[iIndex];
                     break;
                 }
@@ -437,16 +405,14 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <param name="action"></param>
-        public void ForEach( Action<ValueT> action )
-        {
+        public void ForEach(Action<ValueT> action) {
             ValueT[] valueArray = this.ToArray();
-            if ( valueArray.Length <= 0 )
+            if (valueArray.Length <= 0)
                 return;
 
-            for ( int iIndex = 0; iIndex < valueArray.Length; iIndex++ )
-            {
+            for (int iIndex = 0; iIndex < valueArray.Length; iIndex++) {
                 ValueT itemT = valueArray[iIndex];
-                action( itemT );
+                action(itemT);
             }
         }
 
@@ -455,16 +421,14 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="match"></param>
         /// <returns></returns>
-        public bool Exists( Predicate<ValueT> match )
-        {
+        public bool Exists(Predicate<ValueT> match) {
             ValueT[] valueArray = this.ToArray();
-            if ( valueArray.Length <= 0 )
+            if (valueArray.Length <= 0)
                 return false;
 
-            for ( int iIndex = 0; iIndex < valueArray.Length; iIndex++ )
-            {
+            for (int iIndex = 0; iIndex < valueArray.Length; iIndex++) {
                 ValueT itemT = valueArray[iIndex];
-                if ( match( itemT ) == true )
+                if (match(itemT) == true)
                     return true;
             }
 
@@ -474,8 +438,7 @@ namespace NetIOCPClient.Util.Collections
         /// <summary>
         /// 
         /// </summary>
-        public void Clear()
-        {
+        public void Clear() {
             m_LockList.EnterWriteLock();
             {
                 m_List.Clear();
@@ -508,15 +471,13 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <returns></returns>
         //[MultiThreadedWarning( "zh-CHS", "当前的数组是列表临时产生的,不能保存数组用于以后操作:警告!" )]
-        public ValueT[] ToArray()
-        {
-            if ( m_bIsValueChange == false )
+        public ValueT[] ToArray() {
+            if (m_bIsValueChange == false)
                 return m_ValueArray;
 
             m_LockList.EnterReadLock();
             {
-                if ( m_bIsValueChange == true )
-                {
+                if (m_bIsValueChange == true) {
                     m_ValueArray = m_List.ToArray();
 
                     m_bIsValueChange = false;
@@ -531,14 +492,12 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <returns></returns>
-        public ValueT[] ToArrayAndClear()
-        {
+        public ValueT[] ToArrayAndClear() {
             ValueT[] valueArray = s_ZeroArray;
 
             m_LockList.EnterWriteLock();
             {
-                if ( m_bIsValueChange == true )
-                {
+                if (m_bIsValueChange == true) {
                     valueArray = m_List.ToArray();
 
                     m_bIsValueChange = false;
@@ -561,13 +520,12 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <returns></returns>
-        public IEnumerator<ValueT> GetEnumerator()
-        {
+        public IEnumerator<ValueT> GetEnumerator() {
             ValueT[] tempValueArray = this.ToArray();
-            if ( tempValueArray == null )
+            if (tempValueArray == null)
                 yield break;
 
-            for ( int iIndex = 0; iIndex < tempValueArray.Length; iIndex++ )
+            for (int iIndex = 0; iIndex < tempValueArray.Length; iIndex++)
                 yield return tempValueArray[iIndex];
         }
 
@@ -575,8 +533,7 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <returns></returns>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
+        IEnumerator IEnumerable.GetEnumerator() {
             return GetEnumerator();
         }
         #endregion

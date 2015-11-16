@@ -7,11 +7,10 @@ namespace NetIOCPClient.Log
     /// <summary>
     /// 文件输出的适配器
     /// </summary>
-    public class FileAppender:ILogAppender
+    public class FileAppender : ILogAppender
     {
-        private FileAppender()
-        {
-            
+        private FileAppender() {
+
         }
 
         #region 日志输出
@@ -29,16 +28,14 @@ namespace NetIOCPClient.Log
         /// 日志输出
         /// </summary>
         /// <param name="info"></param>
-        public void Write(LogInfo info)
-        {
+        public void Write(LogInfo info) {
             //  日志过滤
             if (info.MessageFlag < level || info.MessageFlag > LogMessageType.MSG_FATALERROR)
                 return;
 
             bool isLock = false;
 
-            lock (s_lockLogFileInfoQueue)
-            {
+            lock (s_lockLogFileInfoQueue) {
                 logFileInfoQueue.Enqueue(info);
 
                 // 检测是否有其它的线程已在处理中，如在使用就退出,否则开始锁定
@@ -51,14 +48,11 @@ namespace NetIOCPClient.Log
                 return;
 
             LogInfo[] logInfoArray;
-            do
-            {
+            do {
                 logInfoArray = null;
 
-                lock (s_lockLogFileInfoQueue)
-                {
-                    if (logFileInfoQueue.Count > 0)
-                    {
+                lock (s_lockLogFileInfoQueue) {
+                    if (logFileInfoQueue.Count > 0) {
                         logInfoArray = logFileInfoQueue.ToArray();
                         logFileInfoQueue.Clear();
                     }
@@ -69,17 +63,16 @@ namespace NetIOCPClient.Log
                 if (logInfoArray == null)
                     break;
 
-                using (StreamWriter writer = new StreamWriter(fileName,true))//File.AppendText(fileName))
+                using (StreamWriter writer = new StreamWriter(fileName, true))//File.AppendText(fileName))
                 {
-                    for (int iIndex = 0; iIndex < logInfoArray.Length; iIndex++)
-                    {
+                    for (int iIndex = 0; iIndex < logInfoArray.Length; iIndex++) {
                         LogInfo logInfo = logInfoArray[iIndex];
 
                         writer.WriteLine(logInfo.ToString());
                     }
                 }
             } while (true);
-        } 
+        }
 
         #endregion
 
@@ -93,18 +86,16 @@ namespace NetIOCPClient.Log
         /// <summary>
         /// 日志等级(默认等级为 Notifce)
         /// </summary>
-        public LogMessageType Level
-        {
+        public LogMessageType Level {
             get { return level; }
-            set
-            {
+            set {
                 level = value;
 
                 //  理论上来说None表示不对日志做输出
                 if (level == LogMessageType.MSG_NONE)
                     level = LogMessageType.MSG_DOS_PROMPT;
             }
-        } 
+        }
 
         #endregion
 
@@ -125,8 +116,7 @@ namespace NetIOCPClient.Log
         /// </remarks>
         /// <param name="fileName"></param>
         /// <returns></returns>
-        public static FileAppender GetAppender(string fileName)
-        {
+        public static FileAppender GetAppender(string fileName) {
             if (s_appenderMap.ContainsKey(fileName))
                 return s_appenderMap[fileName];
 
@@ -140,21 +130,18 @@ namespace NetIOCPClient.Log
             if (dir == null)
                 return null;
 
-            if (!dir.Exists)
-            {
-                try
-                {
+            if (!dir.Exists) {
+                try {
                     dir.Create();
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     Logs.Error(ex.ToString());
                     return null;
                 }
             }
 
             return ret;
-        } 
+        }
 
         #endregion
     }

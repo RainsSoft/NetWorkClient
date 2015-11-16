@@ -16,8 +16,7 @@ namespace NetIOCPClient.Log
         /// <param name="messageFlag"></param>
         /// <param name="strFormat"></param>
         /// <param name="parameter"></param>
-        public LogInfo(LogMessageType messageFlag, string strFormat,object[] parameter = null)
-        {
+        public LogInfo(LogMessageType messageFlag, string strFormat, object[] parameter = null) {
             m_messageFlag = messageFlag;
             format = strFormat;
             _parameter = parameter;
@@ -37,8 +36,7 @@ namespace NetIOCPClient.Log
         /// <summary>
         /// 日志标记
         /// </summary>
-        public LogMessageType MessageFlag
-        {
+        public LogMessageType MessageFlag {
             get { return m_messageFlag; }
         }
 
@@ -51,8 +49,7 @@ namespace NetIOCPClient.Log
         /// <summary>
         /// 日志信息（格式）
         /// </summary>
-        public string Format
-        {
+        public string Format {
             get { return format; }
         }
 
@@ -65,8 +62,7 @@ namespace NetIOCPClient.Log
         /// <summary>
         /// 如果 format带格式，这里为参数
         /// </summary>
-        public object[] Parameter
-        {
+        public object[] Parameter {
             get { return _parameter; }
         }
 
@@ -78,10 +74,8 @@ namespace NetIOCPClient.Log
         /// 输出定义好的格式化字符串
         /// </summary>
         /// <returns></returns>
-        public override string ToString()
-        {
-            if (outStr == null)
-            {
+        public override string ToString() {
+            if (outStr == null) {
                 if (_parameter == null)
                     outStr = string.Format("{0} [{1}] {2}", time.ToString("yyyy-MM-dd HH:mm:ss.fff"), m_messageFlag,
                                            format);

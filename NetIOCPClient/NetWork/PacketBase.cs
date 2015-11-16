@@ -7,7 +7,7 @@ using System.Text;
 
 namespace NetIOCPClient.Network
 {
-   
+
     /// <summary>
     ///基础类
     /// </summary>
@@ -18,7 +18,7 @@ namespace NetIOCPClient.Network
         /// 关联片段
         /// </summary>        
         public BufferSegment Buffer;
-        
+
 
         #region
 
@@ -71,6 +71,25 @@ namespace NetIOCPClient.Network
         public virtual void Dispose() {
 
         }
+
+        /// <summary>
+        ///数据加密，最快最简单的加密方式 请使用XOR加密方式
+        /// </summary>
+        /// <param name="buf"></param>
+        /// <param name="offset"></param>
+        /// <param name="len"></param>
+        public virtual void  Encode(byte[] buf, int offset, int len) {
+            
+        }
+        /// <summary>
+        /// 数据解密，最快最简单的加密方式 请使用XOR加密方式
+        /// </summary>
+        /// <param name="buf"></param>
+        /// <param name="offset"></param>
+        /// <param name="len"></param>
+        public virtual void Decode(byte[] buf, int offset, int len) {
+            
+        }
     }
-   
+
 }

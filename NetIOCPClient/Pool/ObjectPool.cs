@@ -57,11 +57,11 @@ namespace NetIOCPClient.Pool
         /// </summary>
         /// <param name="name">对象池的名字</param>
         /// <param name="iInitialCapacity">初始化内存池对象的数量</param>
-        public ObjectPool( int iInitialCapacity ,int maxCapacity ,string name="")
-            : this((long)iInitialCapacity,maxCapacity) {
-                if (string.IsNullOrEmpty(name)) {
-                    name = typeof(T).Name;
-                }
+        public ObjectPool(int iInitialCapacity, int maxCapacity, string name = "")
+            : this((long)iInitialCapacity, maxCapacity) {
+            if (string.IsNullOrEmpty(name)) {
+                name = typeof(T).Name;
+            }
             m_Name = name;
         }
         /// <summary>
@@ -69,8 +69,7 @@ namespace NetIOCPClient.Pool
         /// </summary>
         /// <param name="iInitialCapacity">初始化内存池对象的数量64</param>
         /// <param name="maxCapacity">最大容量int.max</param>
-        protected ObjectPool(long iInitialCapacity , int maxCapacity )
-        {
+        protected ObjectPool(long iInitialCapacity, int maxCapacity) {
             m_InitialCapacity = iInitialCapacity;
             MaxCapacity = maxCapacity;
 
@@ -83,10 +82,8 @@ namespace NetIOCPClient.Pool
         /// <summary>
         /// 扩展数据
         /// </summary>
-        private void Extend()
-        {
-            for (int iIndex = 0; iIndex < m_InitialCapacity; ++iIndex)
-            {
+        private void Extend() {
+            for (int iIndex = 0; iIndex < m_InitialCapacity; ++iIndex) {
                 newCount++;
                 m_FreePool.Enqueue(new T());
             }
@@ -95,8 +92,7 @@ namespace NetIOCPClient.Pool
         /// <summary>
         /// 
         /// </summary>
-        ~ObjectPool()
-        {            
+        ~ObjectPool() {
             Logs.Info(ToString());
             Console.WriteLine(ToString());
         }
@@ -105,8 +101,7 @@ namespace NetIOCPClient.Pool
         /// 输出对象池的一些状态
         /// </summary>
         /// <returns></returns>
-        public override string ToString()
-        {
+        public override string ToString() {
 
             StringBuilder ret = new StringBuilder(512);
             ret.AppendFormat("{0}\r\n", Name);
@@ -119,7 +114,7 @@ namespace NetIOCPClient.Pool
             return ret.ToString();
         }
 
-      
+
 
         #endregion
 
@@ -135,19 +130,16 @@ namespace NetIOCPClient.Pool
         /// 内存池请求数据
         /// </summary>
         /// <returns></returns>
-        public T AcquireContent()
-        {
+        public T AcquireContent() {
             //lock (this)
             {
                 T returnT;
 
-                do
-                {
+                do {
                     if (m_FreePool.TryDequeue(out returnT))
                         break;
 
-                    lock (m_FreePool)
-                    {
+                    lock (m_FreePool) {
                         m_Misses++;
                         Extend();
                     }
@@ -164,13 +156,12 @@ namespace NetIOCPClient.Pool
             }
         }
 
-        
+
         /// <summary>
         /// 内存池释放数据(回收)
         /// </summary>
         /// <param name="content"></param>
-        public void ReleaseContent(T content)
-        {
+        public void ReleaseContent(T content) {
             //lock (this)
             {
                 if (content == null)
@@ -199,8 +190,7 @@ namespace NetIOCPClient.Pool
         /// <summary>
         /// 释放内存池内全部的数据
         /// </summary>
-        public void Free()
-        {
+        public void Free() {
             m_FreePool = new ConcurrentQueue<T>();
         }
 
@@ -209,19 +199,17 @@ namespace NetIOCPClient.Pool
         /// 给出内存池的详细信息
         /// </summary>
         /// <returns></returns>
-        public PoolInfo GetPoolInfo()
-        {
+        public PoolInfo GetPoolInfo() {
             // 不需要锁定的，因为只是给出没有修改数据
-            return new PoolInfo
-                       {
-                           Name = Name,
-                           FreeCount = m_FreePool.Count,
-                           InitialCapacity = m_InitialCapacity,
-                           CurrentCapacity = m_InitialCapacity + newCount,
-                           AcquireCount = acquireCount,
-                           ReleaseCount = releaseCount,
-                           Misses = m_Misses
-                       };
+            return new PoolInfo {
+                Name = Name,
+                FreeCount = m_FreePool.Count,
+                InitialCapacity = m_InitialCapacity,
+                CurrentCapacity = m_InitialCapacity + newCount,
+                AcquireCount = acquireCount,
+                ReleaseCount = releaseCount,
+                Misses = m_Misses
+            };
         }
 
         #endregion
@@ -233,19 +221,14 @@ namespace NetIOCPClient.Pool
         /// <summary>
         /// 对象池的名字
         /// </summary>
-        public string Name
-        {
-            get
-            {
-                if (m_Name == null)
-                {
-                    var type = typeof (T);
-                    if (type.IsGenericType)
-                    {
+        public string Name {
+            get {
+                if (m_Name == null) {
+                    var type = typeof(T);
+                    if (type.IsGenericType) {
                         m_Name = type.Name + type.GetGenericArguments()[0].Name;
                     }
-                    else
-                    {
+                    else {
                         m_Name = type.Name;
                     }
                 }
@@ -264,7 +247,7 @@ namespace NetIOCPClient.Pool
         /// The number of hard references in the queue.
         /// 队列中的硬引用数目。volatile
         /// </summary>
-        private  int _obtainedReferenceCount;
+        private int _obtainedReferenceCount;
         /// <summary>
         /// 对象池中还在引用的(拿出的) 计数
         /// </summary>
@@ -288,7 +271,7 @@ namespace NetIOCPClient.Pool
     /// <typeparam name="T"></typeparam>
     public class StaticInstanceObjectPool<T> where T : new()
     {
-        private readonly ObjectPool<T> instance = new ObjectPool<T>(8,65536);
+        private readonly ObjectPool<T> instance = new ObjectPool<T>(8, 65536);
 
         /// <summary>
         /// 单例模式

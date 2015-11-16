@@ -22,8 +22,7 @@ namespace NetIOCPClient.Serialize
         /// <param name="csvStr"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static object CSVDeserialize(this string csvStr, Type type)
-        {
+        public static object CSVDeserialize(this string csvStr, Type type) {
             MemoryStream stream = new MemoryStream();
             var bytes = Encoding.UTF8.GetBytes(csvStr);
             stream.Write(bytes, 0, bytes.Length);
@@ -37,8 +36,7 @@ namespace NetIOCPClient.Serialize
         /// </summary>
         public static int CurrentLine = 0;
 
-        static object CSVDeserialize(Type type, Stream stream)
-        {
+        static object CSVDeserialize(Type type, Stream stream) {
             var csvReader = new CsvFileReader(stream);
             List<string> head = new List<string>();
             csvReader.ReadRow(head); //  先读取头信息，用来做反射
@@ -48,25 +46,20 @@ namespace NetIOCPClient.Serialize
             var pros = new PropertyInfo[head.Count];
             Dictionary<PropertyInfo, ArrayList> arrayMap = new Dictionary<PropertyInfo, ArrayList>();
 
-            for (int i = 0; i < head.Count; i++)
-            {
+            for (int i = 0; i < head.Count; i++) {
                 var p = type.GetPropertyByName(head[i]);
                 if (p == null)
                     Logs.Debug("Read csv {0} not find columns {1}", type.Name, head[i]);
-                else
-                {
-                    if (p.PropertyType.IsGenericType)
-                    {
+                else {
+                    if (p.PropertyType.IsGenericType) {
                         if (
                             !p.PropertyType.InType(typeof(List<int>), typeof(List<float>), typeof(List<double>), typeof(List<long>),
-                                typeof (List<bool>), typeof (List<string>)))
-                        {
+                                typeof(List<bool>), typeof(List<string>))) {
                             if (!p.PropertyType.IsListEnum())
                                 continue;
                         }
                     }
-                    if (p.PropertyType.IsArray)
-                    {
+                    if (p.PropertyType.IsArray) {
                         arrayMap[p] = new ArrayList();
                         //Console.WriteLine("array has code {0}", p.GetHashCode());
                     }
@@ -77,30 +70,24 @@ namespace NetIOCPClient.Serialize
             List<string> data = new List<string>();
 
             int row = 1;
-            while (csvReader.ReadRow(data))
-            {
+            while (csvReader.ReadRow(data)) {
                 int count = 0;
-                for (var i = 0; i < data.Count; i++)
-                {
-                    if (string.IsNullOrEmpty(data[i]))
-                    {
+                for (var i = 0; i < data.Count; i++) {
+                    if (string.IsNullOrEmpty(data[i])) {
                         count++;
                     }
                 }
 
-                if (count == data.Count)
-                {
+                if (count == data.Count) {
                     //  这里是忽略所有逗号的情况
                     continue;
                 }
 
-                row ++;
+                row++;
                 object obj = Activator.CreateInstance(type);
                 CurrentLine = row;
-                for (int i = 0; i < head.Count; i++)
-                {
-                    if (i >= data.Count)
-                    {
+                for (int i = 0; i < head.Count; i++) {
+                    if (i >= data.Count) {
                         //  数据长度不够，就忽略后面的数据
                         Logs.Error(string.Format("Read csv {0} row {1} col {2} is empty", type.Name, row, i));
                         break;
@@ -110,18 +97,15 @@ namespace NetIOCPClient.Serialize
                     if (p == null)
                         continue;
 
-                    if (p.PropertyType.IsGenericType)
-                    {
+                    if (p.PropertyType.IsGenericType) {
                         if (p.PropertyType.InType(typeof(List<int>), typeof(List<float>), typeof(List<double>), typeof(List<long>),
-                            typeof (List<bool>), typeof (List<string>))
-                            || p.PropertyType.IsListEnum())
-                        {
+                            typeof(List<bool>), typeof(List<string>))
+                            || p.PropertyType.IsListEnum()) {
                             var list = Activator.CreateInstance(p.PropertyType) as IList;
-                            var splits = data[i].Split(new[] {';'}, StringSplitOptions.RemoveEmptyEntries);
+                            var splits = data[i].Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
                             var genericType = p.PropertyType.GetGenericArguments()[0];
 
-                            foreach (var d in splits)
-                            {
+                            foreach (var d in splits) {
 #if DEBUG
                                 list.Add(d.ConvertValue(genericType, head[i]));
 #else
@@ -132,8 +116,7 @@ namespace NetIOCPClient.Serialize
                             p.SetValue(obj, list, null);
                         }
                     }
-                    else if (p.PropertyType.IsArray)
-                    {
+                    else if (p.PropertyType.IsArray) {
                         //  p 是数组
 #if DEBUG
                         arrayMap[p].Add(data[i].ConvertValue(p.PropertyType.GetElementType(), head[i]));
@@ -141,8 +124,7 @@ namespace NetIOCPClient.Serialize
                         arrayMap[p].Add(data[i].ConvertValue(p.PropertyType.GetElementType()));
 #endif
                     }
-                    else
-                    {
+                    else {
 #if DEBUG
                         p.SetValue(obj, data[i].ConvertValue(p.PropertyType, head[i]), null);
 #else
@@ -151,15 +133,12 @@ namespace NetIOCPClient.Serialize
                     }
                 }
 
-                foreach (var a in arrayMap)
-                {
-                    if (a.Value.Count > 0)
-                    {
+                foreach (var a in arrayMap) {
+                    if (a.Value.Count > 0) {
                         a.Key.SetValue(obj, a.Value.ToArray(a.Key.PropertyType.GetElementType()), null);
                         a.Value.Clear();
                     }
-                    else
-                    {
+                    else {
                     }
                 }
 
@@ -176,15 +155,11 @@ namespace NetIOCPClient.Serialize
         /// <param name="type"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        static PropertyInfo GetPropertyByAliases(this Type type, string name)
-        {
-            foreach (var p in type.GetProperties())
-            {
-                
-                foreach(CSVColumnAttribute c in p.GetCustomAttributes(typeof (CSVColumnAttribute), true) )
-                {
-                    if (c.Aliases == name)
-                    {
+        static PropertyInfo GetPropertyByAliases(this Type type, string name) {
+            foreach (var p in type.GetProperties()) {
+
+                foreach (CSVColumnAttribute c in p.GetCustomAttributes(typeof(CSVColumnAttribute), true)) {
+                    if (c.Aliases == name) {
                         return p;
                     }
                 }
@@ -192,10 +167,8 @@ namespace NetIOCPClient.Serialize
             return null;
         }
 
-        static bool InType(this Type type, params Type[] types)
-        {
-            foreach (var t in types)
-            {
+        static bool InType(this Type type, params Type[] types) {
+            foreach (var t in types) {
                 if (type == t)
                     return true;
             }
@@ -208,8 +181,7 @@ namespace NetIOCPClient.Serialize
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        static bool IsListEnum(this Type type)
-        {
+        static bool IsListEnum(this Type type) {
             if (!type.IsGenericType)
                 return false;
             if (type.Name.IndexOf("List") != 0)
@@ -218,8 +190,7 @@ namespace NetIOCPClient.Serialize
             return type.GetGenericArguments()[0].IsEnum;
         }
 
-        static PropertyInfo GetPropertyByName(this Type type, string name)
-        {
+        static PropertyInfo GetPropertyByName(this Type type, string name) {
             var p = type.GetProperty(name);
             if (p == null)
                 return type.GetPropertyByAliases(name);
@@ -232,9 +203,8 @@ namespace NetIOCPClient.Serialize
         /// <typeparam name="T"></typeparam>
         /// <param name="csvStr">csv的字符串</param>
         /// <returns></returns>
-        public static T[] CSVDeserialize<T>(this string csvStr) where T : class, new()
-        {
-            return csvStr.CSVDeserialize(typeof (T)) as T[];
+        public static T[] CSVDeserialize<T>(this string csvStr) where T : class, new() {
+            return csvStr.CSVDeserialize(typeof(T)) as T[];
         }
 
         /// <summary>
@@ -243,32 +213,25 @@ namespace NetIOCPClient.Serialize
         /// <typeparam name="T"></typeparam>
         /// <param name="csvFileName">某个csv的文件</param>
         /// <returns></returns>
-        public static T[] CSVDeserializeFile<T>(this string csvFileName) where T : class, new()
-        {
-            using (Stream fileStream = new FileStream(csvFileName, FileMode.Open, FileAccess.Read))
-            {
+        public static T[] CSVDeserializeFile<T>(this string csvFileName) where T : class, new() {
+            using (Stream fileStream = new FileStream(csvFileName, FileMode.Open, FileAccess.Read)) {
                 return CSVDeserialize(typeof(T), fileStream) as T[];
             }
         }
 
-        static object ConvertValue(this string value, Type type, string paramName)
-        {
-            try
-            {
+        static object ConvertValue(this string value, Type type, string paramName) {
+            try {
                 return value.ConvertValue(type);
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 var msg = string.Format("param {0} value fail. value {1}", paramName, value);
                 Logs.Error(msg);
                 throw new Exception(msg, ex);
             }
         }
 
-        private static object ConvertValue(this string value, Type type)
-        {
-            if (type == typeof (int))
-            {
+        private static object ConvertValue(this string value, Type type) {
+            if (type == typeof(int)) {
                 if (string.IsNullOrEmpty(value))
                     return 0;
 
@@ -276,52 +239,45 @@ namespace NetIOCPClient.Serialize
             }
 
 
-            if (type == typeof (long))
-            {
+            if (type == typeof(long)) {
                 if (string.IsNullOrEmpty(value))
                     return 0;
 
                 return Convert.ToInt64(value);
             }
 
-            if (type == typeof (string))
-            {
+            if (type == typeof(string)) {
                 if (string.IsNullOrEmpty(value))
                     return "";
                 return value;
             }
 
-            if (type == typeof (float))
-            {
+            if (type == typeof(float)) {
                 if (string.IsNullOrEmpty(value))
                     return 0.0f;
                 return Convert.ToSingle(value);
             }
 
-            if (type == typeof (double))
-            {
+            if (type == typeof(double)) {
                 if (string.IsNullOrEmpty(value))
                     return 0.0;
                 return Convert.ToDouble(value);
             }
 
-            if (type == typeof(float))
-            {
+            if (type == typeof(float)) {
                 if (string.IsNullOrEmpty(value))
                     return 0.0f;
                 return Convert.ToSingle(value);
             }
 
-            if (type == typeof (DateTime))
-            {
+            if (type == typeof(DateTime)) {
                 if (string.IsNullOrEmpty(value))
                     return new DateTime(0);
 
                 return DateTime.Parse(value);
             }
 
-            if (type == typeof (bool))
-            {
+            if (type == typeof(bool)) {
                 if (string.IsNullOrEmpty(value))
                     return false;
 
@@ -334,8 +290,7 @@ namespace NetIOCPClient.Serialize
                 return Boolean.Parse(value);
             }
 
-            if (type.IsEnum)
-            {
+            if (type.IsEnum) {
                 if (string.IsNullOrEmpty(value))
                     return 0;
                 return Convert.ToInt32(value);
@@ -351,8 +306,7 @@ namespace NetIOCPClient.Serialize
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="values"></param>
-        public static string CSVSerialize<T>(this T[] values)
-        {
+        public static string CSVSerialize<T>(this T[] values) {
             MemoryStream stream = new MemoryStream();
 
             CsvFileWriter csvWriter = new CsvFileWriter(stream);
@@ -362,21 +316,18 @@ namespace NetIOCPClient.Serialize
             var type = typeof(T);
             var types = type.GetProperties();
             List<string> data = new List<string>();
-            foreach (var t in types)
-            {
-                var a = t.GetCustomAttributes(typeof (CSVColumnAttribute), true);
+            foreach (var t in types) {
+                var a = t.GetCustomAttributes(typeof(CSVColumnAttribute), true);
                 if (a.Length > 0)
-                    data.Add(((CSVColumnAttribute) a[0]).Aliases);
+                    data.Add(((CSVColumnAttribute)a[0]).Aliases);
                 else
                     data.Add(t.Name);
             }
 
             csvWriter.WriteRow(data);
-            foreach (var v in values)
-            {
+            foreach (var v in values) {
                 data.Clear();
-                foreach (var t in types)
-                {
+                foreach (var t in types) {
                     var wv = t.GetValue(v, null);
                     data.Add(wv == null ? "" : wv.ToString());
                 }
@@ -398,8 +349,7 @@ namespace NetIOCPClient.Serialize
         /// 
         /// </summary>
         /// <param name="name">别名</param>
-        public CSVColumnAttribute(string name)
-        {
+        public CSVColumnAttribute(string name) {
             Aliases = name;
         }
 

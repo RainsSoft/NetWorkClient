@@ -20,18 +20,18 @@ namespace NetIOCPClient.Core
         /// <summary>
         /// Internal version number.
         /// </summary>
-		public const float VER = 1.0f;
+        public const float VER = 1.0f;
 
-		/// <summary>
-		/// Maximum size of a packet buffer segment
+        /// <summary>
+        /// Maximum size of a packet buffer segment
         /// 8kb
-		/// </summary>
-		public const int MAX_PBUF_SEGMENT_SIZE = 8192; //8kb
+        /// </summary>
+        public const int MAX_PBUF_SEGMENT_SIZE = 8192; //8kb
 
         /// <summary>
         /// Maximum size of a packet buffer segment.
         /// 512¸ö
         /// </summary>
-		public const int PBUF_SEGMENT_COUNT = 512;
+        public const int PBUF_SEGMENT_COUNT = 512;
     }
 }

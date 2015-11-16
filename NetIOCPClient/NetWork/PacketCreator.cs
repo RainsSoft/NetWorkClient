@@ -14,7 +14,7 @@ namespace NetIOCPClient.Network
     /// </summary>
     public abstract class PacketCreator
     {
-        
+
         /// <summary>
         /// 通过 唯一的ID标识 来缓存数据包
         /// </summary>    
@@ -23,12 +23,12 @@ namespace NetIOCPClient.Network
         //在TCP的情况,不知道什么时候才会有一个完整的包.
         //所以Packet的数据填充交给Packet的Read方法去做.
         public abstract Packet CreatePacket();
-        protected abstract void _initPacketPool() ;
+        protected abstract void _initPacketPool();
         /// <summary>
         /// 创建的 与回收的 packetid必须一样，通过ID来关联创建器与 packet对象
         /// </summary>
         /// <param name="p"></param>
-        public abstract void RecylePacket(Packet p) ;//{
+        public abstract void RecylePacket(Packet p);//{
         //    if (_packetPool == null) {
         //        _packetPool = new ObjectPool<Packet>(128, 1024, string.Format(_packetPoolNameFormat,p.PacketID));
         //    }

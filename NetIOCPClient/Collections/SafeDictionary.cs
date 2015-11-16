@@ -17,25 +17,22 @@ namespace NetIOCPClient.Util.Collections
         /// <summary>
         /// 
         /// </summary>
-        public SafeDictionary()
-        {
+        public SafeDictionary() {
         }
 
         /// <summary>
         /// 
         /// </summary>
-        public SafeDictionary( IDictionary<KeyT, ValueT> dictionary )
-        {
-            m_Dictionary = new Dictionary<KeyT, ValueT>( dictionary );
+        public SafeDictionary(IDictionary<KeyT, ValueT> dictionary) {
+            m_Dictionary = new Dictionary<KeyT, ValueT>(dictionary);
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="iCapacity"></param>
-        public SafeDictionary( int iCapacity )
-        {
-            m_Dictionary = new Dictionary<KeyT, ValueT>( iCapacity );
+        public SafeDictionary(int iCapacity) {
+            m_Dictionary = new Dictionary<KeyT, ValueT>(iCapacity);
         }
         #endregion
 
@@ -44,21 +41,18 @@ namespace NetIOCPClient.Util.Collections
         /// <summary>
         /// 
         /// </summary>
-        public int Count
-        {
+        public int Count {
             get { return m_Dictionary.Count; }
         }
-        
+
         /// <summary>
         /// 
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public ValueT this[KeyT key]
-        {
-            get
-            {
-                ValueT tempVALUE = default( ValueT );
+        public ValueT this[KeyT key] {
+            get {
+                ValueT tempVALUE = default(ValueT);
 
                 m_LockDictionary.EnterReadLock();
                 {
@@ -68,8 +62,7 @@ namespace NetIOCPClient.Util.Collections
 
                 return tempVALUE;
             }
-            set
-            {
+            set {
                 m_LockDictionary.EnterWriteLock();
                 {
                     m_Dictionary[key] = value;
@@ -98,8 +91,7 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="serial"></param>
         /// <param name="realm"></param>
-        public void Add( KeyT key, ValueT value )
-        {
+        public void Add(KeyT key, ValueT value) {
             m_LockDictionary.EnterWriteLock();
             {
                 m_Dictionary[key] = value;
@@ -114,11 +106,10 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="serial"></param>
         /// <param name="realm"></param>
-        public void AddRange( IEnumerable<KeyValuePair<KeyT, ValueT>> dictionary )
-        {
+        public void AddRange(IEnumerable<KeyValuePair<KeyT, ValueT>> dictionary) {
             m_LockDictionary.EnterWriteLock();
             {
-                foreach ( KeyValuePair<KeyT, ValueT> keyValuePair in dictionary )
+                foreach (KeyValuePair<KeyT, ValueT> keyValuePair in dictionary)
                     m_Dictionary[keyValuePair.Key] = keyValuePair.Value;
 
                 m_bIsValueChange = true;
@@ -130,11 +121,10 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <param name="serial"></param>
-        public void Remove( KeyT key )
-        {
+        public void Remove(KeyT key) {
             m_LockDictionary.EnterWriteLock();
             {
-                if ( m_Dictionary.Remove( key ) == true )
+                if (m_Dictionary.Remove(key) == true)
                     m_bIsValueChange = true;
             }
             m_LockDictionary.ExitWriteLock();
@@ -145,35 +135,32 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="match"></param>
         /// <returns></returns>
-        public int RemoveAll( Predicate<KeyT, ValueT> match )
-        {
+        public int RemoveAll(Predicate<KeyT, ValueT> match) {
             KeyValuePair<KeyT, ValueT>[] valueArray = this.ToArray();
-            if ( valueArray.Length <= 0 )
+            if (valueArray.Length <= 0)
                 return 0;
 
-            List<KeyT> removeList = new List<KeyT>( valueArray.Length );
+            List<KeyT> removeList = new List<KeyT>(valueArray.Length);
 
-            for ( int iIndex = 0; iIndex < valueArray.Length; iIndex++ )
-            {
+            for (int iIndex = 0; iIndex < valueArray.Length; iIndex++) {
                 KeyValuePair<KeyT, ValueT> itemT = valueArray[iIndex];
-                if ( match( itemT.Key, itemT.Value ) == true )
-                    removeList.Add( itemT.Key );
+                if (match(itemT.Key, itemT.Value) == true)
+                    removeList.Add(itemT.Key);
             }
 
-            if ( removeList.Count <= 0 )
+            if (removeList.Count <= 0)
                 return 0;
 
             int iRemoveCount = 0;
 
             m_LockDictionary.EnterWriteLock();
             {
-                foreach ( KeyT itemKey in removeList )
-                {
-                    if ( m_Dictionary.Remove( itemKey ) == true )
+                foreach (KeyT itemKey in removeList) {
+                    if (m_Dictionary.Remove(itemKey) == true)
                         iRemoveCount++;
                 }
 
-                if ( iRemoveCount > 0 )
+                if (iRemoveCount > 0)
                     m_bIsValueChange = true;
             }
             m_LockDictionary.ExitWriteLock();
@@ -185,13 +172,12 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <param name="serial"></param>
-        public ValueT GetValue( KeyT key )
-        {
-            ValueT returnVALUE = default( ValueT );
+        public ValueT GetValue(KeyT key) {
+            ValueT returnVALUE = default(ValueT);
 
             m_LockDictionary.EnterReadLock();
             {
-                m_Dictionary.TryGetValue( key, out returnVALUE );
+                m_Dictionary.TryGetValue(key, out returnVALUE);
             }
             m_LockDictionary.ExitReadLock();
 
@@ -202,15 +188,14 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <param name="serial"></param>
-        public bool TryGetValue( KeyT key, out ValueT value )
-        {
-            value = default( ValueT );
+        public bool TryGetValue(KeyT key, out ValueT value) {
+            value = default(ValueT);
 
             bool returnValue = false;
 
             m_LockDictionary.EnterReadLock();
             {
-                returnValue = m_Dictionary.TryGetValue( key, out value );
+                returnValue = m_Dictionary.TryGetValue(key, out value);
             }
             m_LockDictionary.ExitReadLock();
 
@@ -222,13 +207,12 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public bool ContainsKey( KeyT key )
-        {
+        public bool ContainsKey(KeyT key) {
             bool bIsContains = false;
 
             m_LockDictionary.EnterReadLock();
             {
-                bIsContains = m_Dictionary.ContainsKey( key );
+                bIsContains = m_Dictionary.ContainsKey(key);
             }
             m_LockDictionary.ExitReadLock();
 
@@ -240,16 +224,15 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public bool ContainsValue( ValueT value )
-        {
+        public bool ContainsValue(ValueT value) {
             bool bIsContains = false;
 
             m_LockDictionary.EnterReadLock();
             {
-                bIsContains = m_Dictionary.ContainsValue( value );
+                bIsContains = m_Dictionary.ContainsValue(value);
             }
             m_LockDictionary.ExitReadLock();
-            
+
             return bIsContains;
         }
 
@@ -258,19 +241,16 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="match"></param>
         /// <returns></returns>
-        public bool Find( Predicate<KeyT, ValueT> match, out KeyValuePair<KeyT, ValueT> findKeyValuePair )
-        {
-            findKeyValuePair = new KeyValuePair<KeyT, ValueT>( default( KeyT ), default( ValueT ) );
+        public bool Find(Predicate<KeyT, ValueT> match, out KeyValuePair<KeyT, ValueT> findKeyValuePair) {
+            findKeyValuePair = new KeyValuePair<KeyT, ValueT>(default(KeyT), default(ValueT));
 
             KeyValuePair<KeyT, ValueT>[] valueArray = this.ToArray();
-            if ( valueArray.Length <= 0 )
+            if (valueArray.Length <= 0)
                 return false;
 
-            for ( int iIndex = 0; iIndex < valueArray.Length; iIndex++ )
-            {
+            for (int iIndex = 0; iIndex < valueArray.Length; iIndex++) {
                 KeyValuePair<KeyT, ValueT> keyValuePair = valueArray[iIndex];
-                if ( match( keyValuePair.Key, keyValuePair.Value ) == true )
-                {
+                if (match(keyValuePair.Key, keyValuePair.Value) == true) {
                     findKeyValuePair = keyValuePair;
                     return true;
                 }
@@ -284,21 +264,19 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <param name="match"></param>
         /// <returns></returns>
-        public KeyValuePair<KeyT, ValueT>[] FindAll( Predicate<KeyT, ValueT> match )
-        {
+        public KeyValuePair<KeyT, ValueT>[] FindAll(Predicate<KeyT, ValueT> match) {
             List<KeyValuePair<KeyT, ValueT>> keyValuePairList = new List<KeyValuePair<KeyT, ValueT>>();
 
             KeyValuePair<KeyT, ValueT>[] valueArray = this.ToArray();
-            if ( valueArray.Length <= 0 )
+            if (valueArray.Length <= 0)
                 return keyValuePairList.ToArray();
             else
                 keyValuePairList.Capacity = valueArray.Length;
 
-            for ( int iIndex = 0; iIndex < valueArray.Length; iIndex++ )
-            {
+            for (int iIndex = 0; iIndex < valueArray.Length; iIndex++) {
                 KeyValuePair<KeyT, ValueT> keyValuePair = valueArray[iIndex];
-                if ( match( keyValuePair.Key, keyValuePair.Value ) == true )
-                    keyValuePairList.Add( keyValuePair );
+                if (match(keyValuePair.Key, keyValuePair.Value) == true)
+                    keyValuePairList.Add(keyValuePair);
             }
 
             return keyValuePairList.ToArray();
@@ -308,34 +286,30 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <param name="action"></param>
-        public void ForEach( Action<KeyT, ValueT> action )
-        {
+        public void ForEach(Action<KeyT, ValueT> action) {
             KeyValuePair<KeyT, ValueT>[] valueArray = this.ToArray();
-            if ( valueArray.Length <= 0 )
+            if (valueArray.Length <= 0)
                 return;
 
-            for ( int iIndex = 0; iIndex < valueArray.Length; iIndex++ )
-            {
+            for (int iIndex = 0; iIndex < valueArray.Length; iIndex++) {
                 KeyValuePair<KeyT, ValueT> keyValuePair = valueArray[iIndex];
-                action( keyValuePair.Key, keyValuePair.Value );
+                action(keyValuePair.Key, keyValuePair.Value);
             }
         }
-        
+
         /// <summary>
         /// 
         /// </summary>
         /// <param name="match"></param>
         /// <returns></returns>
-        public bool Exists( Predicate<KeyT, ValueT> match )
-        {
+        public bool Exists(Predicate<KeyT, ValueT> match) {
             KeyValuePair<KeyT, ValueT>[] valueArray = this.ToArray();
-            if ( valueArray.Length <= 0 )
+            if (valueArray.Length <= 0)
                 return false;
 
-            for ( int iIndex = 0; iIndex < valueArray.Length; iIndex++ )
-            {
+            for (int iIndex = 0; iIndex < valueArray.Length; iIndex++) {
                 KeyValuePair<KeyT, ValueT> keyValuePair = valueArray[iIndex];
-                if ( match( keyValuePair.Key, keyValuePair.Value ) == true )
+                if (match(keyValuePair.Key, keyValuePair.Value) == true)
                     return true;
             }
 
@@ -345,8 +319,7 @@ namespace NetIOCPClient.Util.Collections
         /// <summary>
         /// 
         /// </summary>
-        public void Clear()
-        {
+        public void Clear() {
             m_LockDictionary.EnterWriteLock();
             {
                 m_Dictionary.Clear();
@@ -397,22 +370,19 @@ namespace NetIOCPClient.Util.Collections
         /// <summary>
         /// 
         /// </summary>
-        private void InternalToCached()
-        {
-            if ( m_bIsValueChange == false )
+        private void InternalToCached() {
+            if (m_bIsValueChange == false)
                 return;
 
             m_LockDictionary.EnterReadLock();
             {
-                if ( m_bIsValueChange == true )
-                {
+                if (m_bIsValueChange == true) {
                     m_KeyArray = new KeyT[m_Dictionary.Count];
                     m_ValueArray = new ValueT[m_Dictionary.Count];
                     m_KeyValuePairArray = new KeyValuePair<KeyT, ValueT>[m_Dictionary.Count];
 
                     int iIndex = 0;
-                    foreach ( KeyValuePair<KeyT, ValueT> keyValuePair in m_Dictionary )
-                    {
+                    foreach (KeyValuePair<KeyT, ValueT> keyValuePair in m_Dictionary) {
                         m_KeyArray[iIndex] = keyValuePair.Key;
                         m_ValueArray[iIndex] = keyValuePair.Value;
                         m_KeyValuePairArray[iIndex] = keyValuePair;
@@ -431,8 +401,7 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <returns></returns>
         //[MultiThreadedWarning( "zh-CHS", "当前的数组是列表临时产生的,不能保存数组用于以后操作:警告!" )]
-        public KeyValuePair<KeyT, ValueT>[] ToArray()
-        {
+        public KeyValuePair<KeyT, ValueT>[] ToArray() {
             InternalToCached();
 
             return m_KeyValuePairArray;
@@ -443,8 +412,7 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <returns></returns>
         //[MultiThreadedWarning( "zh-CHS", "当前的数组是列表临时产生的,不能保存数组用于以后操作:警告!" )]
-        public ValueT[] ToArrayValues()
-        {
+        public ValueT[] ToArrayValues() {
             InternalToCached();
 
             return m_ValueArray;
@@ -455,8 +423,7 @@ namespace NetIOCPClient.Util.Collections
         /// </summary>
         /// <returns></returns>
         //[MultiThreadedWarning( "zh-CHS", "当前的数组是列表临时产生的,不能保存数组用于以后操作:警告!" )]
-        public KeyT[] ToArrayKeys()
-        {
+        public KeyT[] ToArrayKeys() {
             InternalToCached();
 
             return m_KeyArray;
@@ -466,19 +433,16 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <returns></returns>
-        public KeyValuePair<KeyT, ValueT>[] ToArrayAndClear()
-        {
+        public KeyValuePair<KeyT, ValueT>[] ToArrayAndClear() {
             KeyValuePair<KeyT, ValueT>[] keyValuePairArray = s_ZeroKeyValuePairArray;
 
             m_LockDictionary.EnterWriteLock();
             {
-                if ( m_bIsValueChange == true )
-                {
+                if (m_bIsValueChange == true) {
                     keyValuePairArray = new KeyValuePair<KeyT, ValueT>[m_Dictionary.Count];
 
                     int iIndex = 0;
-                    foreach ( KeyValuePair<KeyT, ValueT> keyValuePair in m_Dictionary )
-                    {
+                    foreach (KeyValuePair<KeyT, ValueT> keyValuePair in m_Dictionary) {
                         keyValuePairArray[iIndex] = keyValuePair;
                         ++iIndex;
                     }
@@ -504,19 +468,16 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <returns></returns>
-        public ValueT[] ToArrayValuesAndClear()
-        {
+        public ValueT[] ToArrayValuesAndClear() {
             ValueT[] valueArray = s_ZeroValueArray;
 
             m_LockDictionary.EnterWriteLock();
             {
-                if ( m_bIsValueChange == true )
-                {
+                if (m_bIsValueChange == true) {
                     valueArray = new ValueT[m_Dictionary.Count];
 
                     int iIndex = 0;
-                    foreach ( KeyValuePair<KeyT, ValueT> keyValuePair in m_Dictionary )
-                    {
+                    foreach (KeyValuePair<KeyT, ValueT> keyValuePair in m_Dictionary) {
                         valueArray[iIndex] = keyValuePair.Value;
                         ++iIndex;
                     }
@@ -542,19 +503,16 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <returns></returns>
-        public KeyT[] ToArrayKeysAndClear()
-        {
+        public KeyT[] ToArrayKeysAndClear() {
             KeyT[] keyArray = s_ZeroKeyArray;
 
             m_LockDictionary.EnterWriteLock();
             {
-                if ( m_bIsValueChange == true )
-                {
+                if (m_bIsValueChange == true) {
                     keyArray = new KeyT[m_Dictionary.Count];
 
                     int iIndex = 0;
-                    foreach ( KeyValuePair<KeyT, ValueT> keyValuePair in m_Dictionary )
-                    {
+                    foreach (KeyValuePair<KeyT, ValueT> keyValuePair in m_Dictionary) {
                         keyArray[iIndex] = keyValuePair.Key;
                         ++iIndex;
                     }
@@ -582,13 +540,12 @@ namespace NetIOCPClient.Util.Collections
         /// 等同于ToArray()
         /// </summary>
         /// <returns></returns>
-        public IEnumerator<KeyValuePair<KeyT, ValueT>> GetEnumerator()
-        {
+        public IEnumerator<KeyValuePair<KeyT, ValueT>> GetEnumerator() {
             KeyValuePair<KeyT, ValueT>[] tempKeyValuePairArray = this.ToArray();
-            if ( tempKeyValuePairArray == null )
+            if (tempKeyValuePairArray == null)
                 yield break;
 
-            for ( int iIndex = 0; iIndex < tempKeyValuePairArray.Length; iIndex++ )
+            for (int iIndex = 0; iIndex < tempKeyValuePairArray.Length; iIndex++)
                 yield return tempKeyValuePairArray[iIndex];
         }
 
@@ -596,8 +553,7 @@ namespace NetIOCPClient.Util.Collections
         /// 
         /// </summary>
         /// <returns></returns>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
+        IEnumerator IEnumerable.GetEnumerator() {
             return GetEnumerator();
         }
         #endregion

@@ -838,7 +838,7 @@ namespace NetIOCPClient
             }
         }
 
-      
+
         ///// <summary>
         ///// Connects the client to the server at the specified address and port.
         ///// </summary>
@@ -930,12 +930,12 @@ namespace NetIOCPClient
                 try {
                     _tcpSocket.Shutdown(SocketShutdown.Both);
                 }
-                catch { 
+                catch {
                 }
                 try {
                     _tcpSocket.Close(1);
                 }
-                catch { 
+                catch {
                 }
                 Thread.Sleep(100);
                 this.m_Connected = false;
@@ -999,7 +999,7 @@ namespace NetIOCPClient
                     try {
                         _tcpSocket.Shutdown(SocketShutdown.Both);
                     }
-                    catch { 
+                    catch {
                     }
                 }
                 //断开连接时不要释放_tcpSocket

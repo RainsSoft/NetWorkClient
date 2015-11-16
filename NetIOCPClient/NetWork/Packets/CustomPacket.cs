@@ -27,19 +27,19 @@ namespace NetIOCPClient.Core
             //    WriteBegin(buf, ref offset);
             //    WriteEnd(buf, ref offset);
             //}
-            this.WriteBegin(this.Buffer,ref offset);
-            this.WriteEnd(this.Buffer,ref offset);
+            this.WriteBegin(this.Buffer, ref offset);
+            this.WriteEnd(this.Buffer, ref offset);
         }
         /// <summary>
         /// 长度不能超过64k,windows系统一次最大能发送96K，
         /// 为了保险起见64K为最大值一个包
         /// </summary>
         public byte[] MsgData;
-       
+
 
         public override unsafe void Read(BufferSegment msg) {
             int offset = 0;
-            ReadBegin(msg,ref offset);
+            ReadBegin(msg, ref offset);
             ReadEnd(msg);
         }
 
@@ -51,11 +51,11 @@ namespace NetIOCPClient.Core
             //}
             this.WriteBegin(this.Buffer, ref offset);
             if (MsgData != null) {
-                PacketHelper.Writer.WriteUShort(this.Buffer,ref offset,(ushort)0);
+                PacketHelper.Writer.WriteUShort(this.Buffer, ref offset, (ushort)0);
             }
             else {
-                System.Diagnostics.Debug.Assert((MsgData.Length+HeadSize)<1024*64);
-                PacketHelper.Writer.WriteBytes2(this.Buffer,ref offset,MsgData);
+                System.Diagnostics.Debug.Assert((MsgData.Length + HeadSize) < 1024 * 64);
+                PacketHelper.Writer.WriteBytes2(this.Buffer, ref offset, MsgData);
             }
             this.WriteEnd(this.Buffer, ref offset);
         }
@@ -71,7 +71,7 @@ namespace NetIOCPClient.Core
 
     class CustomPacketCreator : PacketCreator
     {
-        
+
         public override Packet CreatePacket() {
             _initPacketPool();
             CustomPacket packet = _packetPool.AcquireContent();

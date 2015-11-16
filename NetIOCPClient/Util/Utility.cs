@@ -101,80 +101,74 @@ namespace NetIOCPClient.Util
         /// <param name="Output"></param>
         /// <param name="streamInput"></param>
         /// <param name="iLength"></param>
-        public static void FormatBuffer( TextWriter Output, System.IO.Stream streamInput, long iLength )
-        {
-            Output.WriteLine( "     | -- -- -- -- -- -- -- --  -- -- -- -- -- -- -- -- | ---------------- |" );
-            Output.WriteLine( "     | 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F | 0123456789ABCDEF |" );
-            Output.WriteLine( "     | -- -- -- -- -- -- -- --  -- -- -- -- -- -- -- -- | ---------------- |" );
+        public static void FormatBuffer(TextWriter Output, System.IO.Stream streamInput, long iLength) {
+            Output.WriteLine("     | -- -- -- -- -- -- -- --  -- -- -- -- -- -- -- -- | ---------------- |");
+            Output.WriteLine("     | 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F | 0123456789ABCDEF |");
+            Output.WriteLine("     | -- -- -- -- -- -- -- --  -- -- -- -- -- -- -- -- | ---------------- |");
 
             long iByteIndex = 0;
             long iWhole = iLength >> 4;
             long iRem = iLength & 0xF;
 
-            for ( long iIndex = 0; iIndex < iWhole; ++iIndex, iByteIndex += 16 )
-            {
-                StringBuilder strBytes = new StringBuilder( 49 );
-                StringBuilder strChars = new StringBuilder( 16 );
+            for (long iIndex = 0; iIndex < iWhole; ++iIndex, iByteIndex += 16) {
+                StringBuilder strBytes = new StringBuilder(49);
+                StringBuilder strChars = new StringBuilder(16);
 
-                for ( int iIndex2 = 0; iIndex2 < 16; ++iIndex2 )
-                {
+                for (int iIndex2 = 0; iIndex2 < 16; ++iIndex2) {
                     int iByte = streamInput.ReadByte();
 
-                    strBytes.Append( iByte.ToString( "X2" ) );
+                    strBytes.Append(iByte.ToString("X2"));
 
-                    if ( iIndex2 != 7 )
-                        strBytes.Append( ' ' );
+                    if (iIndex2 != 7)
+                        strBytes.Append(' ');
                     else
-                        strBytes.Append( "  " );
+                        strBytes.Append("  ");
 
-                    if ( iByte >= 0x20 && iByte < 0x80 )
-                        strChars.Append( (char)iByte );
+                    if (iByte >= 0x20 && iByte < 0x80)
+                        strChars.Append((char)iByte);
                     else
-                        strChars.Append( '.' );
+                        strChars.Append('.');
                 }
 
-                Output.Write( iByteIndex.ToString( "X4" ) );
-                Output.Write( "   " );
-                Output.Write( strBytes.ToString() );
-                Output.Write( "  " );
-                Output.WriteLine( strChars.ToString() );
+                Output.Write(iByteIndex.ToString("X4"));
+                Output.Write("   ");
+                Output.Write(strBytes.ToString());
+                Output.Write("  ");
+                Output.WriteLine(strChars.ToString());
             }
 
-            if ( iRem != 0 )
-            {
-                StringBuilder strBytes = new StringBuilder( 49 );
-                StringBuilder strChars = new StringBuilder( (int)iRem );
+            if (iRem != 0) {
+                StringBuilder strBytes = new StringBuilder(49);
+                StringBuilder strChars = new StringBuilder((int)iRem);
 
-                for ( long iIndex2 = 0; iIndex2 < 16; ++iIndex2 )
-                {
-                    if ( iIndex2 < iRem )
-                    {
+                for (long iIndex2 = 0; iIndex2 < 16; ++iIndex2) {
+                    if (iIndex2 < iRem) {
                         long iByte = streamInput.ReadByte();
 
-                        strBytes.Append( iByte.ToString( "X2" ) );
+                        strBytes.Append(iByte.ToString("X2"));
 
-                        if ( iIndex2 != 7 )
-                            strBytes.Append( ' ' );
+                        if (iIndex2 != 7)
+                            strBytes.Append(' ');
                         else
-                            strBytes.Append( "  " );
+                            strBytes.Append("  ");
 
-                        if ( iByte >= 0x20 && iByte < 0x80 )
-                            strChars.Append( (char)iByte );
+                        if (iByte >= 0x20 && iByte < 0x80)
+                            strChars.Append((char)iByte);
                         else
-                            strChars.Append( '.' );
+                            strChars.Append('.');
                     }
                     else
-                        strBytes.Append( "   " );
+                        strBytes.Append("   ");
                 }
 
-                if ( iRem <= 7 )
-                    strBytes.Append( ' ' );
+                if (iRem <= 7)
+                    strBytes.Append(' ');
 
-                Output.Write( iByteIndex.ToString( "X4" ) );
-                Output.Write( "   " );
-                Output.Write( strBytes.ToString() );
-                Output.Write( "  " );
-                Output.WriteLine( strChars.ToString() );
+                Output.Write(iByteIndex.ToString("X4"));
+                Output.Write("   ");
+                Output.Write(strBytes.ToString());
+                Output.Write("  ");
+                Output.WriteLine(strChars.ToString());
             }
         }
         #endregion
@@ -186,14 +180,12 @@ namespace NetIOCPClient.Util
         /// <typeparam name="EnumTypeT"></typeparam>
         /// <param name="enumType"></param>
         /// <returns></returns>
-        public static EnumTypeT GetEmunMaxValues<EnumTypeT>( Type enumType ) where EnumTypeT : IComparable<EnumTypeT>
-        {
-            EnumTypeT maxValue = default( EnumTypeT );
+        public static EnumTypeT GetEmunMaxValues<EnumTypeT>(Type enumType) where EnumTypeT : IComparable<EnumTypeT> {
+            EnumTypeT maxValue = default(EnumTypeT);
 
-            Array enumArray = Enum.GetValues( enumType );
-            foreach ( var item in enumArray )
-            {
-                if ( maxValue.CompareTo( (EnumTypeT)item ) < 0 )
+            Array enumArray = Enum.GetValues(enumType);
+            foreach (var item in enumArray) {
+                if (maxValue.CompareTo((EnumTypeT)item) < 0)
                     maxValue = (EnumTypeT)item;
             }
 
@@ -207,14 +199,12 @@ namespace NetIOCPClient.Util
         /// <typeparam name="EnumTypeT"></typeparam>
         /// <param name="enumType"></param>
         /// <returns></returns>
-        public static EnumTypeT GetEmunMinValues<EnumTypeT>( Type enumType ) where EnumTypeT : IComparable<EnumTypeT>
-        {
-            EnumTypeT minValue = default( EnumTypeT );
+        public static EnumTypeT GetEmunMinValues<EnumTypeT>(Type enumType) where EnumTypeT : IComparable<EnumTypeT> {
+            EnumTypeT minValue = default(EnumTypeT);
 
-            Array enumArray = Enum.GetValues( enumType );
-            foreach ( var item in enumArray )
-            {
-                if ( minValue.CompareTo( (EnumTypeT)item ) > 0 )
+            Array enumArray = Enum.GetValues(enumType);
+            foreach (var item in enumArray) {
+                if (minValue.CompareTo((EnumTypeT)item) > 0)
                     minValue = (EnumTypeT)item;
             }
 

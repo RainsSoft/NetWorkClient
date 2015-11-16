@@ -11,14 +11,13 @@ namespace NetIOCPClient.Pool
     /// <typeparam name="T"></typeparam>
     public static class StaticObjectPool<T> where T : new()
     {
-        private static readonly ObjectPool<T> pool = new ObjectPool<T>(8,1024);
+        private static readonly ObjectPool<T> pool = new ObjectPool<T>(8, 1024);
 
         /// <summary>
         /// 内存池请求数据
         /// </summary>
         /// <returns></returns>
-        public static T AcquireContent()
-        {
+        public static T AcquireContent() {
             return pool.AcquireContent();
         }
 
@@ -26,8 +25,7 @@ namespace NetIOCPClient.Pool
         /// 回收内存
         /// </summary>
         /// <param name="contentT"></param>
-        public static void ReleaseContent(T contentT)
-        {
+        public static void ReleaseContent(T contentT) {
             pool.ReleaseContent(contentT);
         }
     }

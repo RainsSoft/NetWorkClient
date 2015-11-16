@@ -24,16 +24,16 @@ namespace NetIOCPClient.Core
             //    WriteBegin(buf, ref offset);
             //    WriteEnd(buf, ref offset);
             //}
-            this.WriteBegin(this.Buffer,ref offset);
-            this.WriteEnd(this.Buffer,ref offset);
+            this.WriteBegin(this.Buffer, ref offset);
+            this.WriteEnd(this.Buffer, ref offset);
         }
 
 
-       
+
 
         public override unsafe void Read(BufferSegment msg) {
             int offset = 0;
-            ReadBegin(msg,ref offset);
+            ReadBegin(msg, ref offset);
             ReadEnd(msg);
         }
 
@@ -58,7 +58,7 @@ namespace NetIOCPClient.Core
 
     class HeatbeatPacketCreator : PacketCreator
     {
-        
+
         public override Packet CreatePacket() {
             _initPacketPool();
             HeatbeatPacket packet = _packetPool.AcquireContent();

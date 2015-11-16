@@ -18,12 +18,12 @@ namespace NetIOCPClient.Network.Other
         public struct PoolInfo
         {
             #region zh-CHS 共有属性 | en Public Properties
-           
+
             /// <summary>
             /// 
             /// </summary>
             private string m_strName;
-            
+
             /// <summary>
             /// 
             /// </summary>
@@ -32,12 +32,12 @@ namespace NetIOCPClient.Network.Other
                 internal set { m_strName = value; }
             }
 
-            
+
             /// <summary>
             /// 
             /// </summary>
             private int m_iFreeCount;
-            
+
             /// <summary>
             /// 
             /// </summary>
@@ -46,12 +46,12 @@ namespace NetIOCPClient.Network.Other
                 internal set { m_iFreeCount = value; }
             }
 
-            
+
             /// <summary>
             /// 
             /// </summary>
             private int m_iInitialCapacity;
-            
+
             /// <summary>
             /// 
             /// </summary>
@@ -60,12 +60,12 @@ namespace NetIOCPClient.Network.Other
                 internal set { m_iInitialCapacity = value; }
             }
 
-           
+
             /// <summary>
             /// 
             /// </summary>
             private int m_iCurrentCapacity;
-            
+
             /// <summary>
             /// 
             /// </summary>
@@ -74,12 +74,12 @@ namespace NetIOCPClient.Network.Other
                 internal set { m_iCurrentCapacity = value; }
             }
 
-            
+
             /// <summary>
             /// 
             /// </summary>
             private int m_iMisses;
-            
+
             /// <summary>
             /// 
             /// </summary>
