@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace NetIOCPClient.Network
+namespace NetIOCPClient.NetWork
 {
     public delegate void EnumPacketHandlerAttr(PktHandlerAttribute attr, Delegate handle);
     /// <summary>

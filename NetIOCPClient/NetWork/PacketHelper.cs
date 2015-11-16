@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace NetIOCPClient.Network
+namespace NetIOCPClient.NetWork
 {
 
     public class PacketHelper
@@ -708,7 +708,7 @@ namespace NetIOCPClient.Network
                 offset += len;
                 return str;
             }
-            //public static string ReadString(IRobotQ.Network.PacketReader reader, Encoding encoding) {
+            //public static string ReadString(Network.PacketReader reader, Encoding encoding) {
             //    return reader.ReadString();
             //}
             public static unsafe byte ReadByte(byte* buf, ref int offset) {
@@ -862,7 +862,7 @@ namespace NetIOCPClient.Network
             public static byte ReadByte(Stream stream) {
                 return (byte)stream.ReadByte();
             }
-            //public static byte ReadByte(IRobotQ.Network.PacketReader reader) {
+            //public static byte ReadByte(Network.PacketReader reader) {
             //    return reader.ReadByte();
             //}
             public static unsafe ushort ReadUShort(byte* buf, ref int offset) {
@@ -900,7 +900,7 @@ namespace NetIOCPClient.Network
 
                 return (ushort)((ushort)((ushort)b << 8) + (ushort)a);
             }
-            //public static ushort ReadUShort(IRobotQ.Network.PacketReader reader) {
+            //public static ushort ReadUShort(Network.PacketReader reader) {
             //    return reader.ReadUInt16();
             //}
             public unsafe static float ReadFloat(byte* buf, ref int offset) {
@@ -945,7 +945,7 @@ namespace NetIOCPClient.Network
                 int ret = (d << 24) + (c << 16) + (b << 8) + a;
                 return *(((float*)&ret));
             }
-            //public static float ReadFloat(IRobotQ.Network.PacketReader reader) {
+            //public static float ReadFloat(Network.PacketReader reader) {
             //    return reader.ReadSingle();
             //}
             public unsafe static int ReadInt32(byte* buf, ref int offset) {
@@ -990,7 +990,7 @@ namespace NetIOCPClient.Network
                 return (d << 24) + (c << 16) + (b << 8) + a;
             }
 
-            //public static int ReadInt32(IRobotQ.Network.PacketReader reader) {
+            //public static int ReadInt32(Network.PacketReader reader) {
             //    return reader.ReadInt32();
             //}
         }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using NetIOCPClient.Core;
 
-namespace NetIOCPClient.Network
+namespace NetIOCPClient.NetWork
 {
     /// <summary>
     ///  包创建管理器

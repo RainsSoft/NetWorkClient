@@ -7,7 +7,7 @@ using NetIOCPClient.Util.Collections;
 
 
 
-namespace NetIOCPClient.Network.Other
+namespace NetIOCPClient.NetWork.Other
 {
     //[MultiThreadedSupport("zh-CHS", "当前的类所有成员都可锁定,支持多线程操作")]
     public class BufferPool

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using NetIOCPClient.Log;
 
-namespace NetIOCPClient.Network
+namespace NetIOCPClient.NetWork
 {
     public enum PacketErrorLevel
     {
@@ -23,7 +23,11 @@ namespace NetIOCPClient.Network
     /// <param name="msgData">数据包</param>
     /// <returns>处理结果</returns>
     public delegate object PacketHandler(Packet packet, object arg, out PacketErrorLevel level);
-
+    /// <summary>
+    /// 接收包处理委托
+    /// </summary>
+    /// <param name="connIndex"></param>
+    /// <param name="packet"></param>
     public delegate void ClientPacketHandler(long connIndex, Packet packet);
     public delegate void SCPacketHandler(Packet packet);
     public delegate void ServerPacketHandler(long connIndex, BufferSegment msg);

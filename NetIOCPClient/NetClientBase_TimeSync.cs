@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using NetIOCPClient.Core;
 using NetIOCPClient.Log;
-using NetIOCPClient.Network;
+using NetIOCPClient.NetWork;
 
 namespace NetIOCPClient
 {

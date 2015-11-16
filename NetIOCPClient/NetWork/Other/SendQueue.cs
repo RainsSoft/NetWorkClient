@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 
 
-namespace NetIOCPClient.Network.Other
+namespace NetIOCPClient.NetWork.Other
 {
 
     public class SendQueue

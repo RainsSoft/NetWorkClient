@@ -22,7 +22,7 @@ using NetIOCPClient.Util.Collections;
 using NetIOCPClient.Log;
 using NetIOCPClient.Core;
 
-namespace NetIOCPClient.Network
+namespace NetIOCPClient.NetWork
 {
     /// <summary>
     /// Manages a pool of small buffers allocated from large, contiguous chunks of memory.

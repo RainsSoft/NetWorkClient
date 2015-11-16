@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace IRobotQ.GameNet.Network {
+namespace GameNet.Network {
     /// <summary>
     /// 客户端 所有包的 ID
     /// </summary>

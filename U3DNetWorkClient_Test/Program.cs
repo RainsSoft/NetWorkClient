@@ -9,7 +9,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using NetIOCPClient.Core;
 using NetIOCPClient;
-using NetIOCPClient.Network;
+using NetIOCPClient.NetWork;
 
 namespace U3DNetWorkClient_Test
 {

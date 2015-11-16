@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using NetIOCPClient.Util.Collections;
 
-namespace NetIOCPClient.Network.Other
+namespace NetIOCPClient.NetWork.Other
 {
     /// <summary>
     /// (内存池)难得用一次泛型,C# 比 C++ 泛型好用好写多了 :)

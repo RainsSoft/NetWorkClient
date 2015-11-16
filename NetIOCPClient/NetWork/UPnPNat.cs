@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Xml;
 using System.IO;
-namespace NetIOCPClient.Network
+namespace NetIOCPClient.NetWork
 {
     public class UPnPNat
     {

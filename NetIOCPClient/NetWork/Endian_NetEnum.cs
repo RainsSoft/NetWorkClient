@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace NetIOCPClient.Network
+namespace NetIOCPClient.NetWork
 {
     /// <summary>
     /// 计算机如何存储大数值的体系结构

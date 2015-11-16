@@ -5,7 +5,7 @@ using System.Text;
 
 using NetIOCPClient.Pool;
 
-namespace NetIOCPClient.Network
+namespace NetIOCPClient.NetWork
 {
     /// <summary>
     ///  包创建器

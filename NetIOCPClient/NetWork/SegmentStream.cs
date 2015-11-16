@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace NetIOCPClient.Network
+namespace NetIOCPClient.NetWork
 {
     /// <summary>
     /// Similar to MemoryStream, but with an underlying BufferSegment.

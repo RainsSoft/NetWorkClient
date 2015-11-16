@@ -6,14 +6,14 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using NetIOCPClient.Network;
+using NetIOCPClient.NetWork;
 using NetIOCPClient.Log;
 using NetIOCPClient.Core;
 //using NLog;
 
 namespace NetIOCPClient
 {
-    public delegate void NetworkExceptionHandler(object sender, Exception e);
+    public delegate void NetworkExceptionHandler(object sender, NetException e);
     /// <summary>
     /// 收到数据包
     /// </summary>
@@ -264,13 +264,17 @@ namespace NetIOCPClient
         /// <param name="server">The server this client is connected to.</param>
         protected NetClientBase(/*ServerBase server*/) {
             //_server = server;
-
             _bufferSegment = Buffers.CheckOut();
+            _InitClient();
         }
         public NetClientBase(string name)
             : this() {
             this.Name = name;
         }
+        /// <summary>
+        /// 客户端的基本初始化
+        /// </summary>
+        protected abstract void _InitClient();
         #region Public properties
 
         //public ServerBase Server
@@ -396,7 +400,7 @@ namespace NetIOCPClient
                         Logs.Error("网络连接错误.错误码:" + args.SocketError.ToString());
                         this.DisConnect();
                         if (OnRecvError != null) {
-                            OnRecvError(this, new Exception("接收错误，网络连接错误.错误码:" + args.SocketError.ToString()));
+                            OnRecvError(this, new NetException("接收错误，网络连接错误.错误码:" + args.SocketError.ToString()));
                         }
                     }
                     else {
@@ -417,7 +421,7 @@ namespace NetIOCPClient
                     }
                     //长度最大为64k
                     ushort needlargeLen = 0;
-                    if (OnReceive(this._bufferSegment, out needlargeLen)) {   //处理完成
+                    if (DoReceive(this._bufferSegment, out needlargeLen)) {   //处理完成
                         // packet processed entirely
                         _offset = 0;
                         this._bufferSegment.DecrementUsage();//回收
@@ -428,7 +432,7 @@ namespace NetIOCPClient
                             EnsureBuffer();//把没有处理完的数据 放入新的片段开始
                         }
                         else {
-                            throw new Exception("packet包长度异常");
+                            throw new NetException("packet包长度异常");
                         }
                     }
 
@@ -440,7 +444,7 @@ namespace NetIOCPClient
                 Logs.Error("接收数据时发生已释放对象错误：" + ee1.ToString());
                 this.DisConnect();
                 if (OnRecvError != null) {
-                    OnRecvError(this, new Exception("接收数据时发生已释放对象错误:" + ee1.ToString()));
+                    OnRecvError(this, new NetException("接收数据时发生已释放对象错误:" + ee1.ToString()));
                 }
             }
             catch (Exception ee2) {
@@ -449,7 +453,7 @@ namespace NetIOCPClient
                 Logs.Error("接收数据时发生错误：" + ee2.ToString());
                 this.DisConnect();
                 if (OnRecvError != null) {
-                    OnRecvError(this, new Exception("接收数据时发生错误:" + ee2.ToString()));
+                    OnRecvError(this, new NetException("接收数据时发生错误:" + ee2.ToString()));
                 }
             }
             finally {
@@ -502,7 +506,7 @@ namespace NetIOCPClient
         /// Called when a packet has been received and needs to be processed.
         /// </summary>
         /// <param name="numBytes">The size of the packet in bytes.</param>
-        protected virtual bool OnReceive(BufferSegment segment, out ushort needLargeLen) {
+        protected virtual bool DoReceive(BufferSegment segment, out ushort needLargeLen) {
             needLargeLen = 0;
             //处理包
             byte[] recvBuffer = segment.Buffer.Array;
@@ -526,9 +530,9 @@ namespace NetIOCPClient
                     // packet is just too big        
                     Logs.Error(string.Format("接收到的包:{0}长度:{1} >8k,应该不会出现这个大的包,数据异常，客户端主动断开..."));
                     //包不正常了，断开连接就好 
-                    DisConnect();
+                    this.DisConnect();
                     if (OnRecvError != null) {
-                        OnRecvError(this, new Exception(string.Format("包:{0} 长度不正常.长度:{1}", packetId, packetFullLength)));
+                        OnRecvError(this, new NetException(string.Format("包:{0} 长度不正常.长度:{1}", packetId, packetFullLength)));
                     }
 
                     return false;
@@ -553,12 +557,13 @@ namespace NetIOCPClient
                         if (oldseg != null) {
                             oldseg.DecrementUsage();//回收老片段,因为同样的包大小一般是一致的，所以其利用率还是比较高的
                         }
-                        if (p.PacketID == 101) {
+                        //心跳包只发送不返回的，所以接收数据里不需要处理
+                        if (p.PacketID == 101) {//时间同步 直接处理
                             p.Read(p.Buffer);
                             OnRecvTimeSyn(p);
                         }
                         else {
-                            m_RecivePackets.Enqueue(p);
+                            m_RecivePackets.Enqueue(p);//加入到处理列队
 
                         }
                     }
@@ -573,6 +578,7 @@ namespace NetIOCPClient
             } while (this._remainingLength > 0);
             return true;
         }
+
 
         #region 基础异步IOCP发送,一般不使用
         /// <summary>
@@ -597,15 +603,17 @@ namespace NetIOCPClient
 
         /// <summary>
         /// Asynchronously sends a packet of data to the client.
+        /// 单独直接发送指定的 byte[]数据内容到服务端，这里不对byte[] packet进行包装或者修改,外面保证其内容的合法性
         /// </summary>
         /// <param name="packet">An array of bytes containing the packet to be sent.</param>
         /// <param name="length">长度大小有限制，不能超64K。The number of bytes to send starting at offset.</param>
         /// <param name="offset">The offset into packet where the sending begins.</param>
         public virtual void Send(byte[] packet, int offset, int length) {
             if (_tcpSocket != null && _tcpSocket.Connected) {
-                var args = SocketHelpers.AcquireSocketArg();
+                SocketAsyncEventArgs args = SocketHelpers.AcquireSocketArg();
                 if (args != null) {
                     args.Completed += SendAsyncComplete;
+                    //if packet内容太多，需要分包发送
                     args.SetBuffer(packet, offset, length);
                     //BufferSegment sendseg = BufferManager.GetSegment(length);
                     //sendseg.CopyStartFromBytes(0, packet, offset, length);
@@ -669,6 +677,20 @@ namespace NetIOCPClient
             }
         }
         /// <summary>
+        /// 把要发送的数据包加入到发送缓存里面
+        /// </summary>
+        public void AddPacketToSend(Packet packet) {
+            this.m_SendPackets.Enqueue(packet);
+        }
+        /// <summary>
+        /// 把要发送的数据包加入到发送缓存里面
+        /// </summary>
+        public void AddPacketToSend(System.Collections.Generic.ICollection<Packet> packets) {
+            foreach (var v in packets) {
+                this.m_SendPackets.Enqueue(v);
+            }
+        }
+        /// <summary>
         /// 即时异步发送数据包
         /// </summary>
         /// <param name="packet"></param>
@@ -710,7 +732,7 @@ namespace NetIOCPClient
         /// </summary>
         NetQueue<Packet> m_RecivePackets = new NetQueue<Packet>(1024);
         protected void PeekSend() {
-            if (m_IsClosed)
+            if (m_IsClosed || !m_Connected)
                 return;
             if (m_SendPackets.Count > 0) {
                 Packet packet = null;
@@ -725,7 +747,7 @@ namespace NetIOCPClient
         /// </summary>
         public int ProcessPacketCountInOneFrame = 1000000;
         /// <summary>
-        /// 处理缓存包
+        /// 发送/接收缓存包 处理驱动
         /// </summary>
         public void ProcessSendAndRecivedPackets() {
             if (m_IsClosed || !m_Connected) {
@@ -751,9 +773,13 @@ namespace NetIOCPClient
                     m_RecivePackets.TryDequeue(out p);//处理包
                     if (p != null && OnRecvData != null) {
                         pid = p.PacketID;
-                        //ProfInstance pi = Profile.StartProf();
-                        OnRecvData(this, p);//引发数据包接收事件
-                        //pi.EndProf(p.ToString(), 1f);
+#if DEBUG
+                        ProfInstance pi = Profile.StartProf();
+                        OnRecvData(this, p);//引发数据包接收事件 ,内容还没有读取的                    
+                        pi.EndProf(p.ToString(), 1f);
+#else
+                        OnRecvData(this, p);//引发数据包接收事件 ,内容还没有读取的     
+#endif
                         //if (PacketHandles[p.PacketID] != null) {
                         //    PacketHandles[p.PacketID](0L, p);
                         //}
@@ -762,6 +788,7 @@ namespace NetIOCPClient
                         //    Console.WriteLine("包" + p.PacketID + "没有相应的解析委托");
                         //}
                     }
+                    this.HandleReceviedPackets(this, p);//子类里具体操作对包的处理方式
                 }
                 catch {
                     Logs.Error("处理包:" + pid.ToString() + "  过程中发生错误！");
@@ -775,6 +802,7 @@ namespace NetIOCPClient
 
             }
         }
+        protected abstract void HandleReceviedPackets(NetClientBase client, Packet recivedPacket);
         #endregion
 
 
@@ -790,7 +818,7 @@ namespace NetIOCPClient
                         Logs.Warn("ClientNetwork Name:" + this.Name + " 因网络问题,数据尚未发送即失败." + args.SocketError.ToString());
                         this.DisConnect();
                         if (OnSendError != null) {
-                            OnSendError((args.UserToken as Packet), new Exception("socket sendAsyn 错误号:" + args.SocketError.ToString()));
+                            OnSendError((args.UserToken as Packet), new NetException("socket sendAsyn 错误号:" + args.SocketError.ToString()));
                         }
                     }
                     //  发送传输为0，目标方应该断开连接了，这里进入断开环节。
@@ -820,7 +848,7 @@ namespace NetIOCPClient
                             Logs.Error("send error:" + args.SocketError.ToString());
                             this.DisConnect();
                             if (OnSendError != null) {
-                                OnSendError((args.UserToken as Packet), new Exception("socket sendAsyn 错误号:" + args.SocketError.ToString()));
+                                OnSendError((args.UserToken as Packet), new NetException("socket sendAsyn 错误号:" + args.SocketError.ToString()));
                             }
 
                         }

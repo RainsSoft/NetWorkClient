@@ -2,7 +2,7 @@ using System;
 using System.Net.Sockets;
 using NetIOCPClient.Pool;
 
-namespace NetIOCPClient.Network
+namespace NetIOCPClient.NetWork
 {
     public static class SocketHelpers
     {

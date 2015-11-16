@@ -1,7 +1,7 @@
 using System;
 
 
-namespace NetIOCPClient.Network
+namespace NetIOCPClient.NetWork
 {
     /// <summary>
     /// Defines a wrapper for a chunk of memory that may be split into smaller, logical segments.

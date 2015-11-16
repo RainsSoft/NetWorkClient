@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NetIOCPClient.Network;
+using NetIOCPClient.NetWork;
 using NetIOCPClient.Pool;
 
 namespace NetIOCPClient.Core

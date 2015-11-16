@@ -4,7 +4,7 @@ using System;
 using NetIOCPClient.Core;
 
 
-namespace NetIOCPClient.Network.Other
+namespace NetIOCPClient.NetWork.Other
 {
     public class ByteQueue
     {

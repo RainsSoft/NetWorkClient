@@ -4,7 +4,7 @@
 //using Cell.Core;
 
 
-//namespace IRobotQ.GameNet.Network {
+//namespace GameNet.Network {
 //    internal static class CS_PacketsInitialize {
 //        /// <summary>
 //        /// 注册客户端 包 的构造器

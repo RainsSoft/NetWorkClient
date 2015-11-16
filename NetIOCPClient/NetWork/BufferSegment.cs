@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace NetIOCPClient.Network
+namespace NetIOCPClient.NetWork
 {
     /// <summary>
     /// 缓存分段,用于操作ArrayBuffer
