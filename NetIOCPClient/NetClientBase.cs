@@ -554,6 +554,7 @@ namespace NetIOCPClient
                             oldseg.DecrementUsage();//回收老片段,因为同样的包大小一般是一致的，所以其利用率还是比较高的
                         }
                         if (p.PacketID == 101) {
+                            p.Read(p.Buffer);
                             OnRecvTimeSyn(p);
                         }
                         else {

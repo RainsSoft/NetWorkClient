@@ -47,11 +47,10 @@ namespace U3DNetWorkClient_Test
             //login 
             byte[] login=createLoginPacket();
             Console.WriteLine(NetIOCPClient.Util.Utility.ToHex(0, login, 0, login.Length));
+            
             nc.BeginConnect(ip,port);
             //
-            while (!nc.IsConnected) { 
-                
-            }
+            m_WaitObj.WaitOne(1000 * 10);
           
             nc.Send(login,0,login.Length);
             Stopwatch sw = new Stopwatch();
@@ -70,10 +69,9 @@ namespace U3DNetWorkClient_Test
                 }
                 else { 
                       System.Threading.Thread.Sleep(1000*5);
+                      System.Threading.Monitor.Enter(_syncObj);
                       nc.BeginConnect(ip, port);
-                      while (!nc.IsConnected) {
-
-                      }
+                      m_WaitObj.WaitOne(1000 * 10);
                       nc.Send(login, 0, login.Length);
                       nc.StartHeatbeat();
                 }
@@ -81,7 +79,8 @@ namespace U3DNetWorkClient_Test
                 
             }
         }
-
+        static readonly object _syncObj = new object();
+        static System.Threading.ManualResetEvent m_WaitObj = new System.Threading.ManualResetEvent(true);
         static void nc_OnSendError(object sender, Exception e) {
             Console.WriteLine("send error:"+e.ToString());
         }
@@ -109,6 +108,7 @@ namespace U3DNetWorkClient_Test
 
         static void nc_OnConncetEnd(System.Net.Sockets.SocketError obj) {
             Console.WriteLine("连接结果："+obj.ToString());
+            m_WaitObj.Set();
         }
 
         static void nc_OnConnectBegin(object sender, EventArgs e) {
