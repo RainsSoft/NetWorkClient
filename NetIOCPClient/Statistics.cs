@@ -10,6 +10,10 @@ using NetIOCPClient.Util;
 
 namespace NetIOCPClient.Core
 {
+    /// <summary>
+    /// system info
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public abstract class Statistics<T> : Statistics where T : Statistics, new()
     {
         protected static T instance;
@@ -45,6 +49,9 @@ namespace NetIOCPClient.Core
 #if UNITY_WEBPLAYER
  
 #endif
+    /// <summary>
+    /// system info
+    /// </summary>
     public abstract class Statistics
     {
         protected static int s_interval = 30 * 60 * 1000;

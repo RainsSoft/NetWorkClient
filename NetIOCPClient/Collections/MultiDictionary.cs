@@ -9,7 +9,8 @@ using System.Collections;
 namespace NetIOCPClient.Util.Collections
 {
     /// <summary>
-    /// 
+    /// this class that can be used to more easily implement a class
+    /// that associates multiple values to a single key
     /// </summary>
     /// <typeparam name="KeyT"></typeparam>
     /// <typeparam name="ValueT"></typeparam>

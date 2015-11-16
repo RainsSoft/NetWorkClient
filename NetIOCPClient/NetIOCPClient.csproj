@@ -70,10 +70,13 @@
     <Compile Include="Collections\SynchronizedList.cs" />
     <Compile Include="Collections\SynchronizedQueue.cs" />
     <Compile Include="NetWork\ArrayBuffer.cs" />
+    <Compile Include="NetWork\NetBitReadWriter.cs" />
     <Compile Include="NetWork\BufferManager.cs" />
     <Compile Include="NetWork\BufferSegment.cs" />
     <Compile Include="NetWork\Endian_NetEnum.cs" />
+    <Compile Include="NetWork\HalfSingle.cs" />
     <Compile Include="NetWork\INETPacket.cs" />
+    <Compile Include="NetWork\NETException.cs" />
     <Compile Include="NetWork\NetQueue.cs" />
     <Compile Include="NetWork\Other\BufferPool.cs" />
     <Compile Include="NetWork\Other\MemoryPool.cs" />
@@ -88,7 +91,7 @@
     <Compile Include="NetWork\Packets\CustomPacket.cs" />
     <Compile Include="NetWork\Packets\HeatbeatPacket.cs" />
     <Compile Include="NetWork\Packets\TimeSynPacket.cs" />
-    <Compile Include="NetWork\PacketWriteException.cs" />
+    <Compile Include="NetWork\PacketException.cs" />
     <Compile Include="NetWork\PktHandlerAttribute.cs" />
     <Compile Include="NetWork\SegmentStream.cs" />
     <Compile Include="NetWork\SocketHelpers.cs" />
@@ -122,7 +125,9 @@
     <Compile Include="Util\Lang.wp8.cs" />
     <Compile Include="Util\RandomEx.cs" />
     <Compile Include="Util\ThreadPoolEx.cs" />
+    <Compile Include="Util\TimerCall.cs" />
     <Compile Include="Util\Utility.cs" />
+    <Compile Include="Util\UUID.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
