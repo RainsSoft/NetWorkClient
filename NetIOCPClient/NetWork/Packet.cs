@@ -117,14 +117,7 @@ namespace NetIOCPClient.NetWork
         /// 关联数据,作为额外的对象地址关联
         /// </summary>
         public object Token;
-        /// <summary>
-        /// 再一次使用该数据包.
-        /// 当读取数据包时,packetbuf中并没有写入读取的数据.
-        /// 可以通过此方法将读取到的数据写入到packetbuf
-        /// </summary>
-        public virtual void UsePacketAgain() {
-
-        }
+       
         #endregion
         /// <summary>
         /// 如果当前os为大端模式，发送数据生成包的时候需要对 int long等基础数据转换为byte
@@ -164,12 +157,12 @@ namespace NetIOCPClient.NetWork
         }
 
         /// <summary>
-        /// 读包
+        /// 读包,读取当前包内容 注意：一个buffersegment内只有一个包
         /// </summary>
         /// <param name="msg"></param>
         public unsafe abstract void Read(BufferSegment msg);
         /// <summary>
-        /// 写包
+        /// 写包,写入当前包内容 注意：一个buffersegment内只有一个包
         /// </summary>
         public unsafe abstract void Write();
         unsafe protected virtual void WriteBegin(BufferSegment buf, ref int offset) {

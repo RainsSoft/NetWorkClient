@@ -87,7 +87,7 @@ namespace NetIOCPClient
                 TimeSynPacket p = this.PacketCreatorMgr.GetPacketCreator(TimeSynPacket._PacketID).CreatePacket() as TimeSynPacket;//new TimeSynPacket(m_SynTimeStamp);
                 p.ClinetTimeStamp = m_SynTimeStamp;
                 p.ServerTimeStamp = DateTime.Now.ToBinary();
-                p.UsePacketAgain();
+                p.Write();
                 //p.Write();
                 if (IsPrepareModel) {
                     // Send(0,p, true);

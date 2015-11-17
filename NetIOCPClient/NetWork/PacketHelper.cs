@@ -481,7 +481,12 @@ namespace NetIOCPClient.NetWork
             for (int i = 0; i < count; i++)
                 dst[i] = src[i + start_index];
         }
-
+        /// <summary>
+        /// 占2个字节
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="startIndex"></param>
+        /// <returns></returns>
         unsafe public static char ToChar(byte[] value, int startIndex) {
             char ret;
 

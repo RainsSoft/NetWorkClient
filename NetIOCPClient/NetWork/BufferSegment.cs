@@ -162,5 +162,32 @@ namespace NetIOCPClient.NetWork
         public static BufferSegment CreateSegment(byte[] bytes, int offset, int length) {
             return new BufferSegment(new ArrayBuffer(bytes), offset, length, -1);
         }
+
+
+        #region read data
+        public int ReadInt32(ref int offset) {
+           return PacketHelper.Reader.ReadInt32(this, ref offset);
+        }
+
+        public string ReadString1(ref int offset, System.Text.Encoding encoding) {
+            return PacketHelper.Reader.ReadString1(this,ref offset,encoding);
+        }
+
+        public ushort ReadUShort(ref int offset) {
+            return PacketHelper.Reader.ReadUShort(this,ref offset);
+        }
+
+        public bool ReadBool(ref int offset) {
+            return PacketHelper.Reader.ReadBool(this,ref offset);
+        }
+
+        public byte ReadByte(ref int offset) {
+            return PacketHelper.Reader.ReadByte(this,ref offset);
+        }
+
+        public long ReadLong64(ref int offset) {
+            return PacketHelper.Reader.ReadLong64(this,ref offset);
+        }
+        #endregion
     }
 }

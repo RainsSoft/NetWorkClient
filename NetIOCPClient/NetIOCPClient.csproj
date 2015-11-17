@@ -38,7 +38,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Collections\BitSet.cs" />
     <Compile Include="Collections\Delegate.cs" />
+    <Compile Include="Collections\HashSet.cs" />
+    <Compile Include="Collections\ISet.cs" />
     <Compile Include="Collections\LockFreeMultiDictionary.cs" />
     <Compile Include="Collections\LockFreeDictionary.cs" />
     <Compile Include="Collections\LockFreeHashSet.cs" />

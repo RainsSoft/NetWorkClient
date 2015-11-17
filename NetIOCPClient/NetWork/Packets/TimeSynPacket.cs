@@ -85,20 +85,20 @@ namespace NetIOCPClient.Core
         public override ushort PacketID {
             get { return _PacketID; }
         }
-        /// <summary>
-        /// 重复使用，重新写入新数据
-        /// </summary>
-        public override unsafe void UsePacketAgain() {
-            int offset = 0;
-            //fixed (byte* buf = PacketBuf) {
-            BufferSegment buf = this.Buffer;
-            WriteBegin(buf, ref offset);
-            PacketHelper.Writer.WriteLong64(buf, ref offset, ClinetTimeStamp);
-            //IRQHelper.WriteLong64(buf, ref offset, ServerRecvTimeStamp);
-            PacketHelper.Writer.WriteLong64(buf, ref offset, ServerTimeStamp);
-            WriteEnd(buf, ref offset);
-            // }
-        }
+        ///// <summary>
+        ///// 重复使用，重新写入新数据
+        ///// </summary>
+        //public  unsafe void UsePacketAgain() {
+        //    int offset = 0;
+        //    //fixed (byte* buf = PacketBuf) {
+        //    BufferSegment buf = this.Buffer;
+        //    WriteBegin(buf, ref offset);
+        //    PacketHelper.Writer.WriteLong64(buf, ref offset, ClinetTimeStamp);
+        //    //IRQHelper.WriteLong64(buf, ref offset, ServerRecvTimeStamp);
+        //    PacketHelper.Writer.WriteLong64(buf, ref offset, ServerTimeStamp);
+        //    WriteEnd(buf, ref offset);
+        //    // }
+        //}
 
         protected override void _initBuffer() {
             this.Buffer = BufferManager.Small.CheckOut();
