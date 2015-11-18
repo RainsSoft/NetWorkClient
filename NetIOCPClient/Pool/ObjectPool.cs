@@ -70,6 +70,8 @@ namespace NetIOCPClient.Pool
         /// <param name="iInitialCapacity">初始化内存池对象的数量64</param>
         /// <param name="maxCapacity">最大容量int.max</param>
         protected ObjectPool(long iInitialCapacity, int maxCapacity) {
+            Interlocked.Increment(ref _IncrementUID);
+            m_UniqueId = _IncrementUID;
             m_InitialCapacity = iInitialCapacity;
             MaxCapacity = maxCapacity;
 
@@ -263,21 +265,12 @@ namespace NetIOCPClient.Pool
         //public object ObtainObj() {
         //    return this.AcquireContent();
         //}
-    }
-
-    /// <summary>
-    /// 带单例模式的对象池
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class StaticInstanceObjectPool<T> where T : new()
-    {
-        private readonly ObjectPool<T> instance = new ObjectPool<T>(8, 65536);
-
-        /// <summary>
-        /// 单例模式
-        /// </summary>
-        public ObjectPool<T> Instatnce {
-            get { return instance; }
+        private static long _IncrementUID = 0L;
+        private long m_UniqueId;
+        public long UniqueId {
+            get { return m_UniqueId; }
         }
     }
+
+
 }

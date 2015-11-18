@@ -25,7 +25,9 @@ namespace NetIOCPClient.Pool
         int ObtainedCount {
             get;
         }
-
+        long UniqueId {
+            get;
+        }
         ///// <summary>
         ///// Enqueues an object in the pool to be reused.
         ///// 入队的池中的对象可以重复使用。

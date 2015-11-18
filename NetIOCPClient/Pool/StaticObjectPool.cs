@@ -5,6 +5,22 @@ using System.Text;
 
 namespace NetIOCPClient.Pool
 {
+
+    /// <summary>
+    /// 带单例模式的对象池
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public class StaticInstanceObjectPool<T> where T : new()
+    {
+        private readonly ObjectPool<T> instance = new ObjectPool<T>(8, 65536);
+
+        /// <summary>
+        /// 单例模式
+        /// </summary>
+        public ObjectPool<T> Instatnce {
+            get { return instance; }
+        }
+    }
     /// <summary>
     /// 泛型的，静态唯一的对象池【线程安全，放心使用】
     /// </summary>

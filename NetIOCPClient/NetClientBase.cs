@@ -551,7 +551,9 @@ namespace NetIOCPClient
                         //接收包处理
                         Packet p = creator.CreatePacket();
                         BufferSegment oldseg = p.Buffer;
-                        p.Buffer = BufferManager.GetSegment(packetFullLength);//取新的片段，根据长度
+                        int oldLen = (oldseg==null)?0:oldseg.Length;    
+                        //保证包的片段能存入比原始内容长的数据
+                        p.Buffer = BufferManager.GetSegment(packetFullLength>oldLen?packetFullLength:oldLen);//取新的片段，根据长度
                         //把当前包的数据复制到关联片段内
                         p.Buffer.CopyStartFromBytes(0, recvBuffer, offset, packetFullLength);
                         if (oldseg != null) {
@@ -660,10 +662,7 @@ namespace NetIOCPClient
         /// </summary>
         /// <param name="packet"></param>
         public void Send(Packet packet) {
-            ////开始发送
-            if (OnSend != null) {
-                OnSend(this, packet);
-            }
+            
             if (IsPrepareModel) {
                 //ToDo:
             }
@@ -706,6 +705,10 @@ namespace NetIOCPClient
                     args.SetBuffer(packet, offset, length);
                     packetdata.Token = this;//可能使用的
                     args.UserToken = packetdata;//发送完即可回收包
+                    //开始发送
+                    if (OnSend != null) {
+                        OnSend(this, packetdata);
+                    }
                     bool doResult = _tcpSocket.SendAsync(args);
                     if (!doResult) {
                         SendAsyncComplete(_tcpSocket, args);

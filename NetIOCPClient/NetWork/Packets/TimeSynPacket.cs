@@ -15,49 +15,22 @@ namespace NetIOCPClient.Core
         internal long ClinetTimeStamp;
         public unsafe TimeSynPacket()
             : base() {
+            // base create bufffer
         }
         internal unsafe TimeSynPacket(long clientTimeStamp)
             : base() {
             ClinetTimeStamp = clientTimeStamp;
             ServerTimeStamp = DateTime.Now.ToBinary();
-            int offset = 0;
-            //fixed (byte* buf = PacketBuf) {
-            BufferSegment buf = this.Buffer;
-            WriteBegin(buf, ref offset);
-
-            PacketHelper.Writer.WriteLong64(buf, ref offset, ClinetTimeStamp);
-            PacketHelper.Writer.WriteLong64(buf, ref offset, ServerTimeStamp);
-            //IRQHelper.WriteLong64(buf, ref offset, ServerSendTimeStamp);
-            WriteEnd(buf, ref offset);
-            //}
+            //
+            this.Write();
         }
         internal unsafe TimeSynPacket(long clientTimeStamp, long serverTime)
             : base() {
             ClinetTimeStamp = clientTimeStamp;
             ServerTimeStamp = serverTime;
-            int offset = 0;
-            //fixed (byte* buf = PacketBuf) {
-            BufferSegment buf = this.Buffer;
-            WriteBegin(buf, ref offset);
-
-            PacketHelper.Writer.WriteLong64(buf, ref offset, ClinetTimeStamp);
-            //IRQHelper.WriteLong64(buf, ref offset, ServerRecvTimeStamp);
-            PacketHelper.Writer.WriteLong64(buf, ref offset, ServerTimeStamp);
-            WriteEnd(buf, ref offset);
-            // }
+            //
+            this.Write();
         }
-        //public override unsafe void UsePacketAgain() {
-        //    int offset = 0;
-        //    //fixed (byte* buf = PacketBuf) {
-        //    BufferSegment buf = this.Buffer;
-        //        WriteBegin(buf, ref offset);
-
-        //        PacketHelper.Writer.WriteLong64(buf, ref offset, ClinetTimeStamp);
-        //        //IRQHelper.WriteLong64(buf, ref offset, ServerRecvTimeStamp);
-        //        PacketHelper.Writer.WriteLong64(buf, ref offset, ServerTimeStamp);
-        //        WriteEnd(buf, ref offset);
-        //    //}
-        //}
 
 
         public override unsafe void Read(BufferSegment msg) {
@@ -85,23 +58,10 @@ namespace NetIOCPClient.Core
         public override ushort PacketID {
             get { return _PacketID; }
         }
-        ///// <summary>
-        ///// 重复使用，重新写入新数据
-        ///// </summary>
-        //public  unsafe void UsePacketAgain() {
-        //    int offset = 0;
-        //    //fixed (byte* buf = PacketBuf) {
-        //    BufferSegment buf = this.Buffer;
-        //    WriteBegin(buf, ref offset);
-        //    PacketHelper.Writer.WriteLong64(buf, ref offset, ClinetTimeStamp);
-        //    //IRQHelper.WriteLong64(buf, ref offset, ServerRecvTimeStamp);
-        //    PacketHelper.Writer.WriteLong64(buf, ref offset, ServerTimeStamp);
-        //    WriteEnd(buf, ref offset);
-        //    // }
-        //}
+
 
         protected override void _initBuffer() {
-            this.Buffer = BufferManager.Small.CheckOut();
+            this.Buffer = BufferManager.Tiny.CheckOut();
         }
     }
     internal class TimeSynPacketCreator : PacketCreator

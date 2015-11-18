@@ -100,7 +100,7 @@
     <Compile Include="NetWork\SocketHelpers.cs" />
     <Compile Include="Interface\IClientBase.cs" />
     <Compile Include="Log\Appender.cs" />
-    <Compile Include="Log\ConsoleAppender.net35.cs" />
+    <Compile Include="Log\ConsoleAppender_net35.cs" />
     <Compile Include="Log\DebugAppender.cs" />
     <Compile Include="Log\DefaultLog.cs" />
     <Compile Include="Log\FileAppender.cs" />

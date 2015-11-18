@@ -15,7 +15,7 @@ namespace NetIOCPClient.Log
 #else
 
         /// <summary>
-        /// 初始化日志配置文件
+        /// 初始化日志配置文件, 添加一个文件的适配器输出
         /// </summary>
         /// <param name="logFile"></param>
         /// <param name="msgType"></param>
@@ -301,9 +301,15 @@ namespace NetIOCPClient.Log
         }
 
         /// <summary>
-        /// 添加一个控制台的适配器
+        /// 添加一个控制台的适配器输出
         /// </summary>
         public static void AddConsoleAppender() {
+            AddAppender(new ConsoleAppender());
+        }
+        /// <summary>
+        /// 添加一个调试的适配器输出
+        /// </summary>
+        public static void AddDebugAppender() {
             AddAppender(new ConsoleAppender());
         }
     }

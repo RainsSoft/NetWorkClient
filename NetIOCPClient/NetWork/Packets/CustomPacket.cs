@@ -15,20 +15,13 @@ namespace NetIOCPClient.Core
         internal static readonly ushort _PacketID = 99;
         public CustomPacket()
             : base() {
-
-
+            // base create buffer
         }
-
 
         internal unsafe CustomPacket(bool fake)
             : base(100) {
-            int offset = 0;
-            //fixed (byte* buf = PacketBuf) {
-            //    WriteBegin(buf, ref offset);
-            //    WriteEnd(buf, ref offset);
-            //}
-            this.WriteBegin(this.Buffer, ref offset);
-            this.WriteEnd(this.Buffer, ref offset);
+            //
+            this.Write();
         }
         /// <summary>
         /// 长度不能超过64k,windows系统一次最大能发送96K，

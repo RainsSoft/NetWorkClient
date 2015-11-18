@@ -12,24 +12,16 @@ namespace NetIOCPClient.Core
         internal static readonly ushort _PacketID = 100;
         public HeatbeatPacket()
             : base() {
-
+            // base create buffer
 
         }
 
 
         internal unsafe HeatbeatPacket(bool fake)
             : base(100) {
-            int offset = 0;
-            //fixed (byte* buf = PacketBuf) {
-            //    WriteBegin(buf, ref offset);
-            //    WriteEnd(buf, ref offset);
-            //}
-            this.WriteBegin(this.Buffer, ref offset);
-            this.WriteEnd(this.Buffer, ref offset);
+            //
+            this.Write();
         }
-
-
-
 
         public override unsafe void Read(BufferSegment msg) {
             int offset = 0;
