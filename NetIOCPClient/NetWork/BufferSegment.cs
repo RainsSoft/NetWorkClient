@@ -188,6 +188,31 @@ namespace NetIOCPClient.NetWork
         public long ReadLong64(ref int offset) {
             return PacketHelper.Reader.ReadLong64(this,ref offset);
         }
+        public byte[] ReadBytes2(ref int offset) {
+            return PacketHelper.Reader.ReadBytes2(this,ref offset);
+        }
         #endregion
+
+
+
+        public float ReadFloat(ref int offset) {
+            return PacketHelper.Reader.ReadFloat(this,ref offset);
+        }
+
+        public float PeekFloat(int offset) {
+            return PacketHelper.Reader.PeekFloat(this,offset);
+        }
+
+        public byte[] ReadBytes1(ref int offset) {
+            return PacketHelper.Reader.ReadBytes1(this,ref offset);
+        }
+
+        public string ReadString2(ref int offset, System.Text.Encoding encoding) {
+            return PacketHelper.Reader.ReadString2(this,ref offset,encoding);
+        }
+
+        public byte[] ReadBytes(ref int offset, int size) {
+            return PacketHelper.Reader.ReadBytes(this, ref offset, size);
+        }
     }
 }

@@ -204,6 +204,7 @@ namespace NetIOCPClient.Pool
         public PoolInfo GetPoolInfo() {
             // 不需要锁定的，因为只是给出没有修改数据
             return new PoolInfo {
+                PoolUniqueId=UniqueId,
                 Name = Name,
                 FreeCount = m_FreePool.Count,
                 InitialCapacity = m_InitialCapacity,

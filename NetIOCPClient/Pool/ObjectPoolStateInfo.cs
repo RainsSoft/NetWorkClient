@@ -39,5 +39,8 @@ namespace NetIOCPClient.Pool
             return pools.Where(o => o.UniqueId ==uniqueId)
                 .Select(o => o.GetPoolInfo()).ToArray();
         }
+        public static IPoolInfo GetPoolByUniqueID(long  uniqueId) {
+            return pools.Find(o => o.UniqueId == uniqueId);
+        }
     }
 }

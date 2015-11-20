@@ -85,6 +85,10 @@ namespace NetIOCPClient.Core
                 _packetPool = new ObjectPool<TimeSynPacket>(4, 64, string.Format(_packetPoolNameFormat, TimeSynPacket._PacketID));
             }
         }
+        public override PoolInfo GetPoolInfo() {
+            _initPacketPool();
+            return _packetPool.GetPoolInfo();
+        }
     }
 
 

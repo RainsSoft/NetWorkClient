@@ -82,7 +82,7 @@ namespace NetIOCPClient
         /// <summary>
         /// 发送字节总数G/M/K/B
         /// </summary>
-        public string SendTotalByteData {
+        public static string SendTotalByteData {
             get {
                 string sm = "{0}(G),{1}(M),{2}(K),{3}(B)";
                 int b = (int)(TotalBytesSent % 1024);
@@ -95,13 +95,39 @@ namespace NetIOCPClient
         /// <summary>
         /// 接收字节总数G/M/K/B
         /// </summary>
-        public string RecivedTotalByteData {
+        public static string RecivedTotalByteData {
             get {
                 string rm = "{0}(G),{1}(M),{2}(K),{3}(B)";
                 int b = (int)(TotalBytesReceived % 1024);
                 int k = (int)(TotalBytesReceived / 1024 % 1024);
                 int m = (int)(TotalBytesReceived / (1024 * 1024) % 1024);
                 int g = (int)(TotalBytesReceived / (1024 * 1024 * 1024) % 1024);
+                return string.Format(rm, g, m, k, b);
+            }
+        }
+        /// <summary>
+        /// 发送字节总数G/M/K/B
+        /// </summary>
+        public  string SendBytesData {
+            get {
+                string sm = "{0}(G),{1}(M),{2}(K),{3}(B)";
+                int b = (int)(this.SentBytes % 1024);
+                int k = (int)(this.SentBytes / 1024 % 1024);
+                int m = (int)(this.SentBytes / (1024 * 1024) % 1024);
+                int g = (int)(this.SentBytes / (1024 * 1024 * 1024) % 1024);
+                return string.Format(sm, g, m, k, b);
+            }
+        }
+        /// <summary>
+        /// 接收字节总数G/M/K/B
+        /// </summary>
+        public  string RecivedBytesData {
+            get {
+                string rm = "{0}(G),{1}(M),{2}(K),{3}(B)";
+                int b = (int)(this.ReceivedBytes % 1024);
+                int k = (int)(this.ReceivedBytes / 1024 % 1024);
+                int m = (int)(this.ReceivedBytes / (1024 * 1024) % 1024);
+                int g = (int)(this.ReceivedBytes / (1024 * 1024 * 1024) % 1024);
                 return string.Format(rm, g, m, k, b);
             }
         }
@@ -167,11 +193,15 @@ namespace NetIOCPClient
             }
         }
         /// <summary>
-        /// 网络包packet管理器
+        ///接收网络包packet构造器
         /// </summary>
-        public PacketCreatorManager PacketCreatorMgr = new PacketCreatorManager();
+        public PacketCreatorManager PacketCreatorMgr_Recived = new PacketCreatorManager();
         /// <summary>
-        /// 组件管理器
+        /// 发送包构造器
+        /// </summary>
+        public PacketCreatorManager PacketCreatorMgr_Send = new PacketCreatorManager();
+        /// <summary>
+        /// 组件管理器 
         /// </summary>
         public ComponentManager ComponentMgr = new ComponentManager();
         /// <summary>
@@ -265,6 +295,17 @@ namespace NetIOCPClient
         protected NetClientBase(/*ServerBase server*/) {
             //_server = server;
             _bufferSegment = Buffers.CheckOut();
+            //m_Buf[100] = new HeatbeatPacketCreator();
+            //m_Buf[101] = new TimeSynPacketCreator();
+            //m_Buf[99] = new CustomPacketCreator();
+            //下面为默认构造器
+            this.PacketCreatorMgr_Send.RegistePacket((ushort)100, new HeatbeatPacketCreator());
+            this.PacketCreatorMgr_Send.RegistePacket((ushort)101, new TimeSynPacketCreator());
+            this.PacketCreatorMgr_Send.RegistePacket((ushort)99, new CustomPacketCreator());
+            //
+            this.PacketCreatorMgr_Recived.RegistePacket((ushort)100, new HeatbeatPacketCreator());
+            this.PacketCreatorMgr_Recived.RegistePacket((ushort)101, new TimeSynPacketCreator());
+            this.PacketCreatorMgr_Recived.RegistePacket((ushort)99, new CustomPacketCreator());
             _InitClient();
         }
         public NetClientBase(string name)
@@ -542,32 +583,47 @@ namespace NetIOCPClient
                     return false;
                 }
                 try {
-                    PacketCreator creator = this.PacketCreatorMgr.GetPacketCreator(packetId);
+                    PacketCreator creator = this.PacketCreatorMgr_Recived.GetPacketCreator(packetId);
                     if (creator == null) {
                         Debug.Assert(false, string.Format("未注册的包类型.packetId:{0} ", packetId));
                         Logs.Error(string.Format("不存在相应的包构造器.packetId:{0} ", packetId));
                     }
                     else {
+#if DEBUG
+                        Console.WriteLine("包缓存池信息:" + creator.GetPoolInfo().ToString());
+#endif
                         //接收包处理
                         Packet p = creator.CreatePacket();
                         BufferSegment oldseg = p.Buffer;
-                        int oldLen = (oldseg==null)?0:oldseg.Length;    
+                        int oldLen = (oldseg == null) ? 0 : oldseg.Length;
                         //保证包的片段能存入比原始内容长的数据
-                        p.Buffer = BufferManager.GetSegment(packetFullLength>oldLen?packetFullLength:oldLen);//取新的片段，根据长度
+                        p.Buffer = BufferManager.GetSegment(packetFullLength > oldLen ? packetFullLength : oldLen);//取新的片段，根据长度
                         //把当前包的数据复制到关联片段内
                         p.Buffer.CopyStartFromBytes(0, recvBuffer, offset, packetFullLength);
                         if (oldseg != null) {
                             oldseg.DecrementUsage();//回收老片段,因为同样的包大小一般是一致的，所以其利用率还是比较高的
                         }
                         //心跳包只发送不返回的，所以接收数据里不需要处理
-                        if (p.PacketID == 101) {//时间同步 直接处理
-                            p.Read(p.Buffer);
-                            OnRecvTimeSyn(p);
-                        }
-                        else {
-                            m_RecivePackets.Enqueue(p);//加入到处理列队
+                        switch (p.PacketID) {
+                            case 101:
+                                p.Read(p.Buffer);
+                                OnRecvTimeSyn(p);
+                                break;
+                            case 100:
+                                break;
+                            default:
+                                m_RecivePackets.Enqueue(p);//加入到处理列队
+                                break;
 
                         }
+                        //if (p.PacketID == 101) {//时间同步 直接处理
+                        //    p.Read(p.Buffer);
+                        //    OnRecvTimeSyn(p);
+                        //}
+                        //else {
+                        //    m_RecivePackets.Enqueue(p);//加入到处理列队
+
+                        //}
                     }
                 }
                 catch {
@@ -662,7 +718,7 @@ namespace NetIOCPClient
         /// </summary>
         /// <param name="packet"></param>
         public void Send(Packet packet) {
-            
+
             if (IsPrepareModel) {
                 //ToDo:
             }
@@ -674,6 +730,44 @@ namespace NetIOCPClient
                     PeekSend();
                 }
             }
+        }
+        /// <summary>
+        /// 获取指定ID类型的包，内部数据需要外面去写入,这样有利于包的重复利用以及
+        /// 节约反复内存申请的开支
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="packetId"></param>
+        /// <returns></returns>
+        protected T CreateRecivedPacket<T>(ushort packetId) where T : Packet {
+            PacketCreator creator = this.PacketCreatorMgr_Recived.GetPacketCreator(packetId);
+            if (creator == null) {
+                Debug.Assert(false, string.Format("未注册的包类型.packetId:{0} ", packetId));
+                Logs.Error(string.Format("不存在相应的包构造器.packetId:{0} ", packetId));
+            }
+            else {
+                //接收包处理
+                Packet p = creator.CreatePacket();
+                //P内的数据还没有写入 外面注意写入
+                return p as T;
+            }
+            return null;
+        }
+        public T CreatePacketToSend<T>(ushort packetId) where T : Packet {
+            PacketCreator creator = this.PacketCreatorMgr_Send.GetPacketCreator(packetId);
+            if (creator == null) {
+                Debug.Assert(false, string.Format("未注册的包类型.packetId:{0} ", packetId));
+                Logs.Error(string.Format("不存在相应的包构造器.packetId:{0} ", packetId));
+            }
+            else {
+#if DEBUG
+                Console.WriteLine("包缓存池信息:"+creator.GetPoolInfo().ToString());
+#endif
+                //接收包处理
+                Packet p = creator.CreatePacket();
+                //P内的数据还没有写入 外面注意写入
+                return p as T;
+            }
+            return null;
         }
         /// <summary>
         /// 把要发送的数据包加入到发送缓存里面
@@ -799,7 +893,7 @@ namespace NetIOCPClient
                 finally {
                     //回收包
                     if (p != null) {
-                        this.PacketCreatorMgr.GetPacketCreator(p.PacketID).RecylePacket(p);
+                        this.PacketCreatorMgr_Recived.GetPacketCreator(p.PacketID).RecylePacket(p);
                     }
                 }
 
@@ -863,7 +957,7 @@ namespace NetIOCPClient
                 Packet packet = (args.UserToken as Packet);
                 if (packet != null) {
                     //回收包,以便重复利用
-                    (packet.Token as NetClientBase).PacketCreatorMgr.GetPacketCreator(packet.PacketID).RecylePacket(packet);
+                    (packet.Token as NetClientBase).PacketCreatorMgr_Send.GetPacketCreator(packet.PacketID).RecylePacket(packet);
                 }
                 SocketHelpers.ReleaseSocketArg(args);
             }
@@ -1055,14 +1149,14 @@ namespace NetIOCPClient
                 Packet p = null;
                 m_SendPackets.TryDequeue(out p);
                 if (p != null) {
-                    this.PacketCreatorMgr.GetPacketCreator(p.PacketID).RecylePacket(p);
+                    this.PacketCreatorMgr_Send.GetPacketCreator(p.PacketID).RecylePacket(p);
                 }
             }
             while (m_RecivePackets.Count > 0) {
                 Packet p = null;
                 m_RecivePackets.TryDequeue(out p);
                 if (p != null) {
-                    this.PacketCreatorMgr.GetPacketCreator(p.PacketID).RecylePacket(p);
+                    this.PacketCreatorMgr_Recived.GetPacketCreator(p.PacketID).RecylePacket(p);
                 }
             }
         }

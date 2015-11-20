@@ -116,7 +116,7 @@ namespace NetIOCPClient.Log
         /// <param name="strFormat"></param>
         static void InternalWriteLine(LogMessageType messageFlag, string strFormat) {
             Console.Write("\r");
-
+            Console.ForegroundColor = ConsoleColor.Blue;
             switch (messageFlag) {
                 case LogMessageType.MSG_NONE: // direct printf replacement
                     Console.Write("[NONE]: ");
@@ -128,26 +128,31 @@ namespace NetIOCPClient.Log
                     Console.Write("[SQL]: ");
                     break;
                 case LogMessageType.MSG_INFO:
+                    Console.ForegroundColor = ConsoleColor.Green;
                     Console.Write("[INFO]: ");
 
                     break;
                 case LogMessageType.MSG_NOTICE:
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
                     Console.Write("[NOTICE]: ");
 
                     break;
                 case LogMessageType.MSG_WARNING:
+                    Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.Write("[WARNING]: ");
 
                     break;
                 case LogMessageType.MSG_DEBUG:
                     Console.Write("[DEBUG]: ");
-
                     break;
+                    
                 case LogMessageType.MSG_ERROR:
+                    Console.ForegroundColor = ConsoleColor.Red;
                     Console.Write("[ERROR]: ");
 
                     break;
                 case LogMessageType.MSG_FATALERROR:
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
                     Console.Write("[FATAL ERROR]: ");
 
                     break;
@@ -171,7 +176,7 @@ namespace NetIOCPClient.Log
                     s_strInput = strFormat;
                     break;
             }
-
+            Console.ResetColor();
             StringBuilder strStringBuilder = new StringBuilder("");
 
             if (messageFlag != LogMessageType.MSG_DOS_PROMPT) {

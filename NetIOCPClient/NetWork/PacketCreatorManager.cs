@@ -45,9 +45,7 @@ namespace NetIOCPClient.NetWork
         }
         public PacketCreatorManager() {
             //基础类型
-            m_Buf[100] = new HeatbeatPacketCreator();
-            m_Buf[101] = new TimeSynPacketCreator();
-            m_Buf[99] = new CustomPacketCreator();
+
         }
     }
 

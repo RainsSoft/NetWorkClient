@@ -67,7 +67,7 @@ namespace NetIOCPClient.Pool
     public struct PoolInfo
     {
         #region zh-CHS 共有属性 | en Public Properties
-
+        public long PoolUniqueId { get; internal set; }
         /// <summary>
         /// 空闲数量
         /// </summary>
@@ -109,8 +109,8 @@ namespace NetIOCPClient.Pool
         /// <returns></returns>
         public override string ToString() {
 
-            return string.Format("{0} FreeCount={1} CurrentCapacity={2} Misses={3} freerate={4:f3}% AcquireCount={5} ReleaseCount={6}",
-                Name, FreeCount, CurrentCapacity, Misses, FreeCount * 100f / CurrentCapacity,
+            return string.Format("ID:{0} FreeCount={1} CurrentCapacity={2} Misses={3} freerate={4:f3}% AcquireCount={5} ReleaseCount={6}",
+                PoolUniqueId.ToString()+" , "+Name, FreeCount, CurrentCapacity, Misses, FreeCount * 100f / CurrentCapacity,
                 AcquireCount, ReleaseCount);
         }
 

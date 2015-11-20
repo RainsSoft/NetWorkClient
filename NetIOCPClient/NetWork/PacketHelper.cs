@@ -998,6 +998,13 @@ namespace NetIOCPClient.NetWork
             //public static int ReadInt32(Network.PacketReader reader) {
             //    return reader.ReadInt32();
             //}
+
+            public static float PeekFloat(byte[] buf, int offset) {
+               return ToSingle(buf, offset);
+            }
+            public static float PeekFloat(BufferSegment buf, int offset) {
+                return ToSingle(buf.Buffer.Array, buf.Offset+offset);
+            }
         }
     }
 

@@ -83,6 +83,10 @@ namespace NetIOCPClient.Core
                 _packetPool = new ObjectPool<CustomPacket>(4, 128, string.Format(_packetPoolNameFormat, CustomPacket._PacketID));
             }
         }
+        public override PoolInfo GetPoolInfo() {
+            _initPacketPool();
+            return _packetPool.GetPoolInfo();
+        }
     }
 
 
