@@ -127,16 +127,16 @@ namespace NetIOCPClient.Pool
         private int newCount;
 
         #region zh-CHS 共有方法 | en Public Methods
-
+        //private readonly ReaderWriterLockSlim m_lock = new ReaderWriterLockSlim();
         /// <summary>
         /// 内存池请求数据
         /// </summary>
         /// <returns></returns>
         public T AcquireContent() {
-            //lock (this)
+            //lock (this)            
             {
                 T returnT;
-
+               
                 do {
                     if (m_FreePool.TryDequeue(out returnT))
                         break;

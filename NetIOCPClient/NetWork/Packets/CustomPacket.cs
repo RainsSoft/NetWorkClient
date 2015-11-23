@@ -80,7 +80,7 @@ namespace NetIOCPClient.Core
         ObjectPool<CustomPacket> _packetPool;
         protected override void _initPacketPool() {
             if (_packetPool == null) {
-                _packetPool = new ObjectPool<CustomPacket>(4, 128, string.Format(_packetPoolNameFormat, CustomPacket._PacketID));
+                _packetPool = new ObjectPool<CustomPacket>(2, 128, string.Format(_packetPoolNameFormat, CustomPacket._PacketID));
             }
         }
         public override PoolInfo GetPoolInfo() {

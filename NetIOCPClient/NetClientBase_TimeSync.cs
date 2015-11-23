@@ -13,8 +13,11 @@ namespace NetIOCPClient
     {
 
         #region 心跳包处理
-        int HEATBEATTIME = 15;//15秒心跳一次
-
+#if DEBUG
+        private readonly static int HEATBEATTIME = 1;
+#else
+        private readonly static int HEATBEATTIME = 15;//15秒心跳一次
+#endif
 
         private Stopwatch m_HeatbeatTimer = new Stopwatch();
         private bool m_HeatBeatStart = false;
@@ -22,14 +25,15 @@ namespace NetIOCPClient
             if (m_HeatBeatStart && m_HeatbeatTimer.Elapsed.Seconds > HEATBEATTIME) {
                 //HeatbeatPacket p = Packet.GetPacket<HeatbeatPacket>(HeatbeatPacket._PacketID);
                 //HeatbeatPacket p = new HeatbeatPacket(true);
-                HeatbeatPacket p = this.PacketCreatorMgr_Send.GetPacketCreator(HeatbeatPacket._PacketID).CreatePacket() as HeatbeatPacket;
+                HeatbeatPacket p = this.CreatePacketToSend<HeatbeatPacket>(HeatbeatPacket._PacketID);
+                p.Write();
                 if (IsPrepareModel) {
                     //Send(0, p, true);
                 }
                 else {
                     // Send(p, true);
 #if DEBUG
-                    Logs.Info("Send HeatBeat:"+p.PacketID.ToString());
+                    Logs.Info("Send HeatBeat:" + p.PacketID.ToString());
                     Console.WriteLine("包缓存池信息:" + this.PacketCreatorMgr_Send.GetPacketCreator(HeatbeatPacket._PacketID).GetPoolInfo().ToString());
 
 #endif
@@ -61,8 +65,12 @@ namespace NetIOCPClient
         #endregion
 
         #region 时间同步
-
+#if DEBUG
+        private readonly static int TimeSynInterval = 100 * 2;
+#else
         private readonly static int TimeSynInterval = 1000 * 30;//15秒进行一次时间同步
+#endif
+
         private Stopwatch m_SynTimer = Stopwatch.StartNew();
         //private int m_TimeSynThreshold = 10;/
         //上一次执行同步的时刻.
@@ -91,7 +99,7 @@ namespace NetIOCPClient
             if (m_SynTimer.ElapsedMilliseconds - m_SynTimeStamp > TimeSynInterval || m_SynTimeStamp == 0) {
                 m_SynTimeStamp = m_SynTimer.ElapsedMilliseconds;
                 //TimeSynPacket p = Packet.GetPacket<TimeSynPacket>(TimeSynPacket._PacketID);// new TimeSynPacket(m_SynTimeStamp);
-                TimeSynPacket p = this.PacketCreatorMgr_Send.GetPacketCreator(TimeSynPacket._PacketID).CreatePacket() as TimeSynPacket;//new TimeSynPacket(m_SynTimeStamp);
+                TimeSynPacket p = this.CreatePacketToSend<TimeSynPacket>(TimeSynPacket._PacketID);//new TimeSynPacket(m_SynTimeStamp);
                 p.ClinetTimeStamp = m_SynTimeStamp;
                 p.ServerTimeStamp = DateTime.Now.ToBinary();
                 p.Write();
@@ -101,7 +109,7 @@ namespace NetIOCPClient
                 }
                 else {
 #if DEBUG
-                    Logs.Info("Send TimeSyn:"+p.PacketID.ToString());
+                    Logs.Info("Send TimeSyn:" + p.PacketID.ToString());
                     Console.WriteLine("包缓存池信息:" + this.PacketCreatorMgr_Send.GetPacketCreator(TimeSynPacket._PacketID).GetPoolInfo().ToString());
 #endif
                     Send(p);
@@ -114,7 +122,7 @@ namespace NetIOCPClient
 
         private void OnRecvTimeSyn(Packet packet) {
 #if DEBUG
-            Logs.Info("Recived TimeSyn:"+packet.PacketID.ToString());
+            Logs.Info("Recived TimeSyn:" + packet.PacketID.ToString());
 #endif
             TimeSynPacket p = packet as TimeSynPacket;
             m_Ping = (int)(m_SynTimer.ElapsedMilliseconds - p.ClinetTimeStamp);

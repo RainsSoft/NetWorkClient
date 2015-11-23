@@ -19,7 +19,7 @@ namespace NetIOCPClient.NetWork
         /// </summary>        
         public BufferSegment Buffer;
 
-
+   
         #region
 
         /// <summary>

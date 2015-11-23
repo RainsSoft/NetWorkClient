@@ -82,7 +82,7 @@ namespace NetIOCPClient.Core
         ObjectPool<TimeSynPacket> _packetPool;
         protected override void _initPacketPool() {
             if (_packetPool == null) {
-                _packetPool = new ObjectPool<TimeSynPacket>(4, 64, string.Format(_packetPoolNameFormat, TimeSynPacket._PacketID));
+                _packetPool = new ObjectPool<TimeSynPacket>(2, 64, string.Format(_packetPoolNameFormat, TimeSynPacket._PacketID));
             }
         }
         public override PoolInfo GetPoolInfo() {

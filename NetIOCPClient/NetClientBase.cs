@@ -179,19 +179,19 @@ namespace NetIOCPClient
                 m_NoDelay = value;
             }
         }
-        /// <summary>
-        /// 是否采用缓冲发送的形式 
-        /// </summary>
-        private bool m_IsBuffered = false;
-        /// <summary>
-        /// 是否采用缓冲发送的形式 
-        /// 只读
-        /// </summary>
-        public bool IsBuffered {
-            get {
-                return m_IsBuffered;
-            }
-        }
+        ///// <summary>
+        ///// 是否采用缓冲发送的形式 
+        ///// </summary>
+        //private bool m_IsBuffered = false;
+        ///// <summary>
+        ///// 是否采用缓冲发送的形式 
+        ///// 只读
+        ///// </summary>
+        //public bool IsBuffered {
+        //    get {
+        //        return m_IsBuffered;
+        //    }
+        //}
         /// <summary>
         ///接收网络包packet构造器
         /// </summary>
@@ -398,6 +398,7 @@ namespace NetIOCPClient
         /// 开始 异步TCP 接收数据
         /// </summary>
         protected void BeginReceive() {
+            //return;
             ResumeReceive();
         }
 
@@ -605,25 +606,18 @@ namespace NetIOCPClient
                         }
                         //心跳包只发送不返回的，所以接收数据里不需要处理
                         switch (p.PacketID) {
-                            case 101:
+                            case 101://时间同步 直接处理
                                 p.Read(p.Buffer);
                                 OnRecvTimeSyn(p);
                                 break;
-                            case 100:
+                            case 100://心跳包 因为不返回，所以不会进入处理
                                 break;
                             default:
                                 m_RecivePackets.Enqueue(p);//加入到处理列队
                                 break;
 
                         }
-                        //if (p.PacketID == 101) {//时间同步 直接处理
-                        //    p.Read(p.Buffer);
-                        //    OnRecvTimeSyn(p);
-                        //}
-                        //else {
-                        //    m_RecivePackets.Enqueue(p);//加入到处理列队
-
-                        //}
+                        //
                     }
                 }
                 catch {
@@ -789,7 +783,7 @@ namespace NetIOCPClient
         /// <param name="packet"></param>
         protected void SendPacketImmediate(Packet packetdata) {
             if (_tcpSocket != null && _tcpSocket.Connected) {
-                var args = SocketHelpers.AcquireSocketArg();
+                SocketAsyncEventArgs args = SocketHelpers.AcquireSocketArg();
                 if (args != null) {
                     byte[] packet = packetdata.Buffer.Buffer.Array;
                     int offset = packetdata.Buffer.Offset;
@@ -814,10 +808,15 @@ namespace NetIOCPClient
                     Interlocked.Add(ref _totalBytesSent, length);
                 }
                 else {
+                    PacketCreatorMgr_Send.GetPacketCreator(packetdata.PacketID).RecylePacket(packetdata);
                     Logs.Error(string.Format("Client {0}'s SocketArgs are null", this._tcpSocket.ToString()));
                 }
             }
-
+            else { 
+                //回收利用
+                PacketCreatorMgr_Send.GetPacketCreator(packetdata.PacketID).RecylePacket(packetdata);
+                Logs.Error(string.Format("Client is null or not connect_{0}", this._tcpSocket==null?"null":"false"));
+            }
         }
 
         /// <summary>
@@ -958,7 +957,7 @@ namespace NetIOCPClient
                 if (packet != null) {
                     //回收包,以便重复利用
                     (packet.Token as NetClientBase).PacketCreatorMgr_Send.GetPacketCreator(packet.PacketID).RecylePacket(packet);
-                }
+                }                
                 SocketHelpers.ReleaseSocketArg(args);
             }
         }

@@ -66,7 +66,7 @@ namespace NetIOCPClient.Core
         ObjectPool<HeatbeatPacket> _packetPool;
         protected override void _initPacketPool() {
             if (_packetPool == null) {
-                _packetPool = new ObjectPool<HeatbeatPacket>(4, 64, string.Format(_packetPoolNameFormat, HeatbeatPacket._PacketID));
+                _packetPool = new ObjectPool<HeatbeatPacket>(2, 64, string.Format(_packetPoolNameFormat, HeatbeatPacket._PacketID));
             }
         }
 
