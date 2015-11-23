@@ -12,7 +12,7 @@ namespace NetIOCPClient.Pool
     /// <typeparam name="T"></typeparam>
     public class StaticInstanceObjectPool<T> where T : new()
     {
-        private readonly ObjectPool<T> instance = new ObjectPool<T>(8, 65536);
+        private readonly ObjectPool<T> instance = new ObjectPool<T>(4, 65536);
 
         /// <summary>
         /// 单例模式
@@ -27,8 +27,11 @@ namespace NetIOCPClient.Pool
     /// <typeparam name="T"></typeparam>
     public static class StaticObjectPool<T> where T : new()
     {
-        private static readonly ObjectPool<T> pool = new ObjectPool<T>(8, 1024);
-
+        private static readonly ObjectPool<T> pool = new ObjectPool<T>(4, 1024);
+        /// <summary>
+        /// ID
+        /// </summary>
+        public static long Pool_UniqueID { get { return pool.UniqueId; } }
         /// <summary>
         /// 内存池请求数据
         /// </summary>
