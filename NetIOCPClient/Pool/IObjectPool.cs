@@ -58,6 +58,7 @@ namespace NetIOCPClient.Pool
         /// </summary>
         /// <returns></returns>
         PoolInfo GetPoolInfo();
+        void Free();
     }
 
 

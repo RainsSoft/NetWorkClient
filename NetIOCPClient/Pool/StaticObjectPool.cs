@@ -12,7 +12,7 @@ namespace NetIOCPClient.Pool
     /// <typeparam name="T"></typeparam>
     public class StaticInstanceObjectPool<T> where T : new()
     {
-        private readonly ObjectPool<T> instance = new ObjectPool<T>(4, 65536);
+        private readonly ObjectPool<T> instance = new ObjectPool<T>(4, 1024);
 
         /// <summary>
         /// 单例模式
@@ -20,6 +20,7 @@ namespace NetIOCPClient.Pool
         public ObjectPool<T> Instatnce {
             get { return instance; }
         }
+        public  long Pool_UniqueID { get { return instance.UniqueId; } }
     }
     /// <summary>
     /// 泛型的，静态唯一的对象池【线程安全，放心使用】
@@ -46,6 +47,9 @@ namespace NetIOCPClient.Pool
         /// <param name="contentT"></param>
         public static void ReleaseContent(T contentT) {
             pool.ReleaseContent(contentT);
+        }
+        public static void Free() {
+            pool.Free();
         }
     }
 }

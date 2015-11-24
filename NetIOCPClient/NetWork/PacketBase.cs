@@ -68,9 +68,7 @@ namespace NetIOCPClient.NetWork
         }
 
 
-        public virtual void Dispose() {
-
-        }
+        public abstract void Dispose();
 
         /// <summary>
         ///数据加密，最快最简单的加密方式 请使用XOR加密方式

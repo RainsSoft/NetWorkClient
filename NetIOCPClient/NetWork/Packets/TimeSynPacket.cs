@@ -68,18 +68,32 @@ namespace NetIOCPClient.Core
     {
 
         public override Packet CreatePacket() {
-            //return new TimeSynPacket();
-            //return Packet.GetPacket<TimeSynPacket>(TimeSynPacket._PacketID);
             _initPacketPool();
-            TimeSynPacket tp = _packetPool.AcquireContent();
-            return tp;
+            TimeSynPacket packet = _packetPool.AcquireContent();
+            if (packet.Buffer != null) {
+                System.Diagnostics.Debug.Assert(packet.Buffer.Uses == 1);
+                packet.Buffer.DecrementUsage();
+            }
+            packet.Buffer = BufferManager.Tiny.CheckOut();
+            return packet;
+            //return Packet.GetPacket<HeatbeatPacket>(HeatbeatPacket._PacketID);
         }
 
         public override void RecylePacket(Packet p) {
             _initPacketPool();
+            System.Diagnostics.Debug.Assert(p.Buffer.Uses == 1);
+            p.Buffer.DecrementUsage();
+            if (p.Buffer.Uses == 0) {
+                p.Buffer = null;
+            }
             _packetPool.ReleaseContent(p as TimeSynPacket);
         }
-        ObjectPool<TimeSynPacket> _packetPool;
+        public override IPoolInfo _Pool {
+            get { return _packetPool; }
+        }
+         ObjectPool<TimeSynPacket> _packetPool;
+        
+       
         protected override void _initPacketPool() {
             if (_packetPool == null) {
                 _packetPool = new ObjectPool<TimeSynPacket>(2, 64, string.Format(_packetPoolNameFormat, TimeSynPacket._PacketID));
@@ -89,6 +103,7 @@ namespace NetIOCPClient.Core
             _initPacketPool();
             return _packetPool.GetPoolInfo();
         }
+        
     }
 
 

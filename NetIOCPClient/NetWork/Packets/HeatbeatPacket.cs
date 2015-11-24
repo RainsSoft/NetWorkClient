@@ -54,16 +54,28 @@ namespace NetIOCPClient.Core
         public override Packet CreatePacket() {
             _initPacketPool();
             HeatbeatPacket packet = _packetPool.AcquireContent();
+            if (packet.Buffer != null) {
+                System.Diagnostics.Debug.Assert(packet.Buffer.Uses == 1);
+                packet.Buffer.DecrementUsage();
+            }
+            packet.Buffer = BufferManager.Tiny.CheckOut();
             return packet;
             //return Packet.GetPacket<HeatbeatPacket>(HeatbeatPacket._PacketID);
         }
 
         public override void RecylePacket(Packet p) {
             _initPacketPool();
+            p.Buffer.DecrementUsage();
+            if (p.Buffer.Uses == 0) {
+                p.Buffer = null;
+            }
             _packetPool.ReleaseContent(p as HeatbeatPacket);
         }
-        //
-        ObjectPool<HeatbeatPacket> _packetPool;
+       
+        public override IPoolInfo _Pool {
+            get { return _packetPool; }
+        }
+         ObjectPool<HeatbeatPacket> _packetPool;
         protected override void _initPacketPool() {
             if (_packetPool == null) {
                 _packetPool = new ObjectPool<HeatbeatPacket>(2, 64, string.Format(_packetPoolNameFormat, HeatbeatPacket._PacketID));
@@ -74,6 +86,7 @@ namespace NetIOCPClient.Core
             _initPacketPool();
             return _packetPool.GetPoolInfo();
         }
+       
     }
 
 

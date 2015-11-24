@@ -9,7 +9,7 @@ namespace NetIOCPClient.NetWork
         //static int s_AcquiredArgs;
         //static int s_ReleasedArgs;
         //static int s_OutstandingArgs;
-        static ObjectPool<SocketAsyncEventArgs> ObjectPoolMgr = new ObjectPool<SocketAsyncEventArgs>(8, 1024);
+        static ObjectPool<SocketAsyncEventArgs> ObjectPoolMgr = new ObjectPool<SocketAsyncEventArgs>(4, 1024);
         static SocketHelpers() {
 
         }

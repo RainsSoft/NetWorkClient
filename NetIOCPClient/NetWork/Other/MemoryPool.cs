@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using NetIOCPClient.Pool;
 using NetIOCPClient.Util.Collections;
 
 namespace NetIOCPClient.NetWork.Other
 {
     /// <summary>
-    /// (内存池)难得用一次泛型,C# 比 C++ 泛型好用好写多了 :)
+    /// 对象(内存池)难得用一次泛型,C# 比 C++ 泛型好用好写多了 :)
     /// </summary>
     /// <typeparam name="T"></typeparam>
     //[MultiThreadedSupport("zh-CHS", "当前的类所有成员都可锁定,支持多线程操作")]
@@ -15,80 +16,80 @@ namespace NetIOCPClient.NetWork.Other
         /// <summary>
         /// 
         /// </summary>
-        public struct PoolInfo
-        {
-            #region zh-CHS 共有属性 | en Public Properties
+        //public struct PoolInfo
+        //{
+        //    #region zh-CHS 共有属性 | en Public Properties
 
-            /// <summary>
-            /// 
-            /// </summary>
-            private string m_strName;
+        //    /// <summary>
+        //    /// 
+        //    /// </summary>
+        //    private string m_strName;
 
-            /// <summary>
-            /// 
-            /// </summary>
-            public string Name {
-                get { return m_strName; }
-                internal set { m_strName = value; }
-            }
-
-
-            /// <summary>
-            /// 
-            /// </summary>
-            private int m_iFreeCount;
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public int FreeCount {
-                get { return m_iFreeCount; }
-                internal set { m_iFreeCount = value; }
-            }
+        //    /// <summary>
+        //    /// 
+        //    /// </summary>
+        //    public string Name {
+        //        get { return m_strName; }
+        //        internal set { m_strName = value; }
+        //    }
 
 
-            /// <summary>
-            /// 
-            /// </summary>
-            private int m_iInitialCapacity;
+        //    /// <summary>
+        //    /// 
+        //    /// </summary>
+        //    private int m_iFreeCount;
 
-            /// <summary>
-            /// 
-            /// </summary>
-            public int InitialCapacity {
-                get { return m_iInitialCapacity; }
-                internal set { m_iInitialCapacity = value; }
-            }
-
-
-            /// <summary>
-            /// 
-            /// </summary>
-            private int m_iCurrentCapacity;
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public int CurrentCapacity {
-                get { return m_iCurrentCapacity; }
-                internal set { m_iCurrentCapacity = value; }
-            }
+        //    /// <summary>
+        //    /// 
+        //    /// </summary>
+        //    public int FreeCount {
+        //        get { return m_iFreeCount; }
+        //        internal set { m_iFreeCount = value; }
+        //    }
 
 
-            /// <summary>
-            /// 
-            /// </summary>
-            private int m_iMisses;
+        //    /// <summary>
+        //    /// 
+        //    /// </summary>
+        //    private int m_iInitialCapacity;
 
-            /// <summary>
-            /// 
-            /// </summary>
-            public int Misses {
-                get { return m_iMisses; }
-                internal set { m_iMisses = value; }
-            }
-            #endregion
-        }
+        //    /// <summary>
+        //    /// 
+        //    /// </summary>
+        //    public int InitialCapacity {
+        //        get { return m_iInitialCapacity; }
+        //        internal set { m_iInitialCapacity = value; }
+        //    }
+
+
+        //    /// <summary>
+        //    /// 
+        //    /// </summary>
+        //    private int m_iCurrentCapacity;
+
+        //    /// <summary>
+        //    /// 
+        //    /// </summary>
+        //    public int CurrentCapacity {
+        //        get { return m_iCurrentCapacity; }
+        //        internal set { m_iCurrentCapacity = value; }
+        //    }
+
+
+        //    /// <summary>
+        //    /// 
+        //    /// </summary>
+        //    private int m_iMisses;
+
+        //    /// <summary>
+        //    /// 
+        //    /// </summary>
+        //    public int Misses {
+        //        get { return m_iMisses; }
+        //        internal set { m_iMisses = value; }
+        //    }
+        //    #endregion
+        //}
         #endregion
 
         #region zh-CHS 私有成员变量 | en Private Member Variables
@@ -178,8 +179,8 @@ namespace NetIOCPClient.NetWork.Other
         /// <param name="iInitialCapacity"></param>
         /// <param name="iCurrentCapacity"></param>
         /// <param name="iMisses"></param>
-        public MemoryPool<T>.PoolInfo GetPoolInfo() {
-            MemoryPool<T>.PoolInfo poolInfo = new MemoryPool<T>.PoolInfo();
+        public PoolInfo GetPoolInfo() {
+            PoolInfo poolInfo = new PoolInfo();
 
             // 可以不需要锁定的，因为只是给出没有修改数据
             poolInfo.Name = m_Name;
@@ -187,7 +188,7 @@ namespace NetIOCPClient.NetWork.Other
             poolInfo.InitialCapacity = m_InitialCapacity;
             poolInfo.CurrentCapacity = m_InitialCapacity * (1 + m_Misses); // m_Misses是从零开始计算的因此需加1
             poolInfo.Misses = m_Misses;
-
+            //poolInfo.ReleaseCount = 
             return poolInfo;
         }
         #endregion

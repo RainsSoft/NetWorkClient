@@ -37,7 +37,7 @@ namespace NetIOCPClient
                     Console.WriteLine("包缓存池信息:" + this.PacketCreatorMgr_Send.GetPacketCreator(HeatbeatPacket._PacketID).GetPoolInfo().ToString());
 
 #endif
-                    Send(p);
+                    Send(p,false);
                 }
                 m_HeatbeatTimer.Reset();
                 m_HeatbeatTimer.Start();
@@ -101,9 +101,9 @@ namespace NetIOCPClient
                 //TimeSynPacket p = Packet.GetPacket<TimeSynPacket>(TimeSynPacket._PacketID);// new TimeSynPacket(m_SynTimeStamp);
                 TimeSynPacket p = this.CreatePacketToSend<TimeSynPacket>(TimeSynPacket._PacketID);//new TimeSynPacket(m_SynTimeStamp);
                 p.ClinetTimeStamp = m_SynTimeStamp;
-                p.ServerTimeStamp = DateTime.Now.ToBinary();
+                p.ServerTimeStamp = DateTime.Now.ToBinary();                
                 p.Write();
-                //p.Write();
+                //
                 if (IsPrepareModel) {
                     // Send(0,p, true);
                 }
@@ -112,7 +112,7 @@ namespace NetIOCPClient
                     Logs.Info("Send TimeSyn:" + p.PacketID.ToString());
                     Console.WriteLine("包缓存池信息:" + this.PacketCreatorMgr_Send.GetPacketCreator(TimeSynPacket._PacketID).GetPoolInfo().ToString());
 #endif
-                    Send(p);
+                    Send(p,false);
                 }
             }
             else {

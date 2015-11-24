@@ -8,16 +8,21 @@ using System.Collections.Generic;
 
 namespace NetIOCPClient.NetWork.Other
 {
-
+    /// <summary>
+    /// 发送byte[]队列
+    /// </summary>
     public class SendQueue
     {
         /// <summary>
-        /// 单位数据
+        /// 单位数据(克?) 
         /// </summary>
         public class Gram
         {
             private static Stack<Gram> _pool = new Stack<Gram>();
-
+            /// <summary>
+            /// 获得
+            /// </summary>
+            /// <returns></returns>
             public static Gram Acquire() {
                 lock (_pool) {
                     Gram gram;
@@ -38,25 +43,33 @@ namespace NetIOCPClient.NetWork.Other
 
             private byte[] _buffer;
             private int _length;
-
+            /// <summary>
+            /// 缓冲区的字节
+            /// </summary>
             public byte[] Buffer {
                 get {
                     return _buffer;
                 }
             }
-
+            /// <summary>
+            /// 已经写入的数据长度
+            /// </summary>
             public int Length {
                 get {
                     return _length;
                 }
             }
-
+            /// <summary>
+            /// 剩下可用长度
+            /// </summary>
             public int Available {
                 get {
                     return (_buffer.Length - _length);
                 }
             }
-
+            /// <summary>
+            /// 是否满了
+            /// </summary>
             public bool IsFull {
                 get {
                     return (_length == _buffer.Length);
@@ -65,7 +78,13 @@ namespace NetIOCPClient.NetWork.Other
 
             private Gram() {
             }
-
+            /// <summary>
+            /// 写入数据
+            /// </summary>
+            /// <param name="buffer">要写入的数据</param>
+            /// <param name="offset">要写入数据的起始位置</param>
+            /// <param name="length">写入的长度</param>
+            /// <returns>返回写入成功的长度</returns>
             public int Write(byte[] buffer, int offset, int length) {
                 int write = Math.Min(length, this.Available);
 
@@ -75,7 +94,9 @@ namespace NetIOCPClient.NetWork.Other
 
                 return write;
             }
-
+            /// <summary>
+            /// 回收
+            /// </summary>
             public void Release() {
                 lock (_pool) {
                     _pool.Push(this);
@@ -83,10 +104,17 @@ namespace NetIOCPClient.NetWork.Other
                 }
             }
         }
-
+        /// <summary>
+        /// 字节池一段数据长度
+        /// </summary>
         private static int m_CoalesceBufferSize = 512;
+        /// <summary>
+        /// 申请 2048个 512字节大小的缓冲池
+        /// </summary>
         private static BufferPool m_UnusedBuffers = new BufferPool("Coalesced", 2048, m_CoalesceBufferSize);
-
+        /// <summary>
+        /// 修改缓存池m_UnusedBuffers字节大小
+        /// </summary>
         public static int CoalesceBufferSize {
             get {
                 return m_CoalesceBufferSize;
@@ -102,27 +130,41 @@ namespace NetIOCPClient.NetWork.Other
                 m_UnusedBuffers = new BufferPool("Coalesced", 2048, m_CoalesceBufferSize);
             }
         }
-
+        /// <summary>
+        /// 申请
+        /// </summary>
+        /// <returns></returns>
         public static byte[] AcquireBuffer() {
             return m_UnusedBuffers.AcquireBuffer();
         }
-
+        /// <summary>
+        /// 回收
+        /// </summary>
+        /// <param name="buffer"></param>
         public static void ReleaseBuffer(byte[] buffer) {
             if (buffer != null && buffer.Length == m_CoalesceBufferSize) {
                 m_UnusedBuffers.ReleaseBuffer(buffer);
             }
         }
-
+        /// <summary>
+        /// 待定
+        /// </summary>
         private Queue<Gram> _pending;
-
+        /// <summary>
+        /// 
+        /// </summary>
         private Gram _buffered;
-
+        /// <summary>
+        /// 发送队列是否发生完毕
+        /// </summary>
         public bool IsFlushReady {
             get {
                 return (_pending.Count == 0 && _buffered != null);
             }
         }
-
+        /// <summary>
+        /// 发送队列是否为空
+        /// </summary>
         public bool IsEmpty {
             get {
                 return (_pending.Count == 0 && _buffered == null);
@@ -132,7 +174,10 @@ namespace NetIOCPClient.NetWork.Other
         public SendQueue() {
             _pending = new Queue<Gram>();
         }
-
+        /// <summary>
+        /// 检测是否发生完毕
+        /// </summary>
+        /// <returns></returns>
         public Gram CheckFlushReady() {
             Gram gram = null;
 
@@ -145,7 +190,10 @@ namespace NetIOCPClient.NetWork.Other
 
             return gram;
         }
-
+        /// <summary>
+        /// 取出要发送的数据
+        /// </summary>
+        /// <returns></returns>
         public Gram Dequeue() {
             Gram gram = null;
 
@@ -159,13 +207,26 @@ namespace NetIOCPClient.NetWork.Other
 
             return gram;
         }
-
+        /// <summary>
+        /// 系统一次发生的最大数据量96k 最好还是小点好 
+        /// </summary>
         private const int PendingCap = 96 * 1024;
-
+        /// <summary>
+        /// 压入要发送的数据
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
         public Gram Enqueue(byte[] buffer, int length) {
             return Enqueue(buffer, 0, length);
         }
-
+        /// <summary>
+        /// 压入要发送的数据
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
         public Gram Enqueue(byte[] buffer, int offset, int length) {
             if (buffer == null) {
                 throw new ArgumentNullException("buffer");
@@ -210,7 +271,9 @@ namespace NetIOCPClient.NetWork.Other
 
             return gram;
         }
-
+        /// <summary>
+        /// 清理
+        /// </summary>
         public void Clear() {
             if (_buffered != null) {
                 _buffered.Release();

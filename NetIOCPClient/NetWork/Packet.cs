@@ -74,9 +74,9 @@ namespace NetIOCPClient.NetWork
         public long PacketPrepareData;
 
         public Packet() {
-            _initBuffer();
+           // _initBuffer();//TODO: 交给创建器来做
         }
-        protected abstract void _initBuffer();
+        protected  abstract void _initBuffer();
         public Packet(ushort packetid)
             : this() {
             m_PacketID = packetid;
@@ -142,7 +142,7 @@ namespace NetIOCPClient.NetWork
         public override void Dispose() {
 
         }
-
+        internal  bool IsComeFromPacketCreate = false;
 
         unsafe protected ushort ReadBegin(BufferSegment msg, ref int offset) {
             ushort packid = PacketHelper.Reader.ReadUShort(msg, ref offset);

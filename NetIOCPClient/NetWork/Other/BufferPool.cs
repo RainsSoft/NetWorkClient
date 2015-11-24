@@ -10,6 +10,9 @@ using NetIOCPClient.Util.Collections;
 namespace NetIOCPClient.NetWork.Other
 {
     //[MultiThreadedSupport("zh-CHS", "当前的类所有成员都可锁定,支持多线程操作")]
+    /// <summary>
+    /// 字节数组 缓存池
+    /// </summary>
     public class BufferPool
     {
         #region zh-CHS 共有的结构 | en Public Struct
@@ -131,11 +134,11 @@ namespace NetIOCPClient.NetWork.Other
 
         #region zh-CHS 构造和初始化和清理 | en Constructors and Initializers and Dispose
         /// <summary>
-        /// 初始化构造
+        /// 初始化构造,申请连续的 尺寸大小相同的 byte[]块
         /// </summary>
         /// <param name="strName"></param>
-        /// <param name="iInitialCapacity"></param>
-        /// <param name="iBufferSize"></param>
+        /// <param name="iInitialCapacity">数量</param>
+        /// <param name="iBufferSize">尺寸</param>
         public BufferPool(string strBufferName, long iInitialCapacity, long iBufferSize) {
             m_BufferName = strBufferName;
             m_BufferSize = iBufferSize;

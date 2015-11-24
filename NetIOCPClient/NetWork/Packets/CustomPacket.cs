@@ -56,7 +56,7 @@ namespace NetIOCPClient.Core
         public override ushort PacketID {
             get { return _PacketID; }
         }
-        protected override void _initBuffer() {
+         protected override void _initBuffer() {
             this.Buffer = BufferManager.Large.CheckOut();
         }
 
@@ -67,16 +67,28 @@ namespace NetIOCPClient.Core
 
         public override Packet CreatePacket() {
             _initPacketPool();
-            CustomPacket packet = _packetPool.AcquireContent();
+            CustomPacket packet = _packetPool.AcquireContent();            
+            if (packet.Buffer != null) {
+                System.Diagnostics.Debug.Assert(packet.Buffer.Uses==1);
+                packet.Buffer.DecrementUsage();
+            }
+            packet.Buffer = BufferManager.Large.CheckOut();
             return packet;
             //return Packet.GetPacket<HeatbeatPacket>(HeatbeatPacket._PacketID);
         }
 
         public override void RecylePacket(Packet p) {
             _initPacketPool();
+            p.Buffer.DecrementUsage();
+            if (p.Buffer.Uses == 0) {
+                p.Buffer = null;
+            }
             _packetPool.ReleaseContent(p as CustomPacket);
         }
-        //
+       
+        public override IPoolInfo _Pool {
+            get { return _packetPool; }
+        }
         ObjectPool<CustomPacket> _packetPool;
         protected override void _initPacketPool() {
             if (_packetPool == null) {
@@ -87,6 +99,7 @@ namespace NetIOCPClient.Core
             _initPacketPool();
             return _packetPool.GetPoolInfo();
         }
+       
     }
 
 

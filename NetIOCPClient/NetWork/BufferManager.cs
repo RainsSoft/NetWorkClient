@@ -70,12 +70,12 @@ namespace NetIOCPClient.NetWork
         /// <summary>
         /// 32kb
         /// </summary>
-        public static readonly BufferManager Normal = new BufferManager(256, 32 * 1024);
+        public static readonly BufferManager Normal = new BufferManager(64, 32 * 1024);
         /// <summary>
         /// Large BufferManager for buffers up to 64kb size
         /// ¥Û∆¨∂Œπ‹¿Ì∆˜ 64kb
         /// </summary>
-        public static readonly BufferManager Large = new BufferManager(128, 64 * 1024);
+        public static readonly BufferManager Large = new BufferManager(32, 64 * 1024);
 
         /// <summary>
         /// Extra Large BufferManager holding 512kb buffers

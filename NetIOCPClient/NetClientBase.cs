@@ -9,6 +9,7 @@ using System.Threading;
 using NetIOCPClient.NetWork;
 using NetIOCPClient.Log;
 using NetIOCPClient.Core;
+using NetIOCPClient.Util;
 //using NLog;
 
 namespace NetIOCPClient
@@ -108,7 +109,7 @@ namespace NetIOCPClient
         /// <summary>
         /// 发送字节总数G/M/K/B
         /// </summary>
-        public  string SendBytesData {
+        public string SendBytesData {
             get {
                 string sm = "{0}(G),{1}(M),{2}(K),{3}(B)";
                 int b = (int)(this.SentBytes % 1024);
@@ -121,7 +122,7 @@ namespace NetIOCPClient
         /// <summary>
         /// 接收字节总数G/M/K/B
         /// </summary>
-        public  string RecivedBytesData {
+        public string RecivedBytesData {
             get {
                 string rm = "{0}(G),{1}(M),{2}(K),{3}(B)";
                 int b = (int)(this.ReceivedBytes % 1024);
@@ -566,7 +567,7 @@ namespace NetIOCPClient
                 ushort packetlen = BitConverter.ToUInt16(recvBuffer, offset + 2);
                 packetFullLength = packetlen + headSize;
                 //判断
-                if (packetFullLength > BufferSize) {
+                if (packetFullLength > BufferSize) {//MaxPacketSize
                     //如果包总长度>默认缓存 8K，则需要建立一个新包，用于下次完整的接收包
                     //但是我们的包不可能超过该长度
                     // packet is just too big        
@@ -595,15 +596,22 @@ namespace NetIOCPClient
 #endif
                         //接收包处理
                         Packet p = creator.CreatePacket();
+                        p.IsComeFromPacketCreate = true;
                         BufferSegment oldseg = p.Buffer;
                         int oldLen = (oldseg == null) ? 0 : oldseg.Length;
-                        //保证包的片段能存入比原始内容长的数据
-                        p.Buffer = BufferManager.GetSegment(packetFullLength > oldLen ? packetFullLength : oldLen);//取新的片段，根据长度
+                        if (packetFullLength > oldLen) {
+                            //保证包的片段能存入比原始内容长的数据
+                            p.Buffer = BufferManager.GetSegment(packetFullLength);// > oldLen ? packetFullLength : oldLen);//取新的片段，根据长度
+                            if (oldseg != null) {
+                                System.Diagnostics.Debug.Assert(oldseg.Uses==1);
+                                oldseg.DecrementUsage();//回收老片段,因为同样的包大小一般是一致的，所以其利用率还是比较高的
+                                oldseg = null;
+                            }
+                        }
                         //把当前包的数据复制到关联片段内
                         p.Buffer.CopyStartFromBytes(0, recvBuffer, offset, packetFullLength);
-                        if (oldseg != null) {
-                            oldseg.DecrementUsage();//回收老片段,因为同样的包大小一般是一致的，所以其利用率还是比较高的
-                        }
+
+
                         //心跳包只发送不返回的，所以接收数据里不需要处理
                         switch (p.PacketID) {
                             case 101://时间同步 直接处理
@@ -656,6 +664,7 @@ namespace NetIOCPClient
         /// <summary>
         /// Asynchronously sends a packet of data to the client.
         /// 单独直接发送指定的 byte[]数据内容到服务端，这里不对byte[] packet进行包装或者修改,外面保证其内容的合法性
+        /// 非线程安全，经过测试，如果发送不在相同的线程可能会造成发送数据不完全的问题，当前方法适合用于测试场景
         /// </summary>
         /// <param name="packet">An array of bytes containing the packet to be sent.</param>
         /// <param name="length">长度大小有限制，不能超64K。The number of bytes to send starting at offset.</param>
@@ -709,18 +718,19 @@ namespace NetIOCPClient
 
         /// <summary>
         /// 把要发送的数据包加入到发送缓存里面
+        /// 如果不加入发送列队，则非线程安全的，经过测试，如果发送不在相同的线程可能会造成发送数据不完全的问题
         /// </summary>
         /// <param name="packet"></param>
-        public void Send(Packet packet) {
+        public void Send(Packet packet,bool addToSendQuene) {
 
             if (IsPrepareModel) {
                 //ToDo:
             }
             else {
-                bool needSend = (m_SendPackets.Count == 0);
+                //bool needSend = (m_SendPackets.Count == 0);
                 m_SendPackets.Enqueue(packet);
                 //如果在此之前，数据空了，那就发一次
-                if (needSend) {
+                if (!addToSendQuene) {
                     PeekSend();
                 }
             }
@@ -741,11 +751,29 @@ namespace NetIOCPClient
             else {
                 //接收包处理
                 Packet p = creator.CreatePacket();
+                p.IsComeFromPacketCreate = true;
                 //P内的数据还没有写入 外面注意写入
                 return p as T;
             }
             return null;
         }
+        protected Packet CreatePacketByReciveData(ushort packetId) {
+            PacketCreator creator = this.PacketCreatorMgr_Recived.GetPacketCreator(packetId);
+            if (creator != null) {
+                //接收包处理
+                Packet p = creator.CreatePacket();
+                p.IsComeFromPacketCreate = true;
+                //P内的数据还没有写入 外面注意写入
+                return p;
+            }
+            return null;
+        }
+        /// <summary>
+        /// 发送包如果不通过该方法创建，可能会造成内存溢出
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="packetId"></param>
+        /// <returns></returns>
         public T CreatePacketToSend<T>(ushort packetId) where T : Packet {
             PacketCreator creator = this.PacketCreatorMgr_Send.GetPacketCreator(packetId);
             if (creator == null) {
@@ -754,10 +782,11 @@ namespace NetIOCPClient
             }
             else {
 #if DEBUG
-                Console.WriteLine("包缓存池信息:"+creator.GetPoolInfo().ToString());
+                Console.WriteLine("包缓存池信息:" + creator.GetPoolInfo().ToString());
 #endif
                 //接收包处理
                 Packet p = creator.CreatePacket();
+                p.IsComeFromPacketCreate = true;
                 //P内的数据还没有写入 外面注意写入
                 return p as T;
             }
@@ -808,14 +837,18 @@ namespace NetIOCPClient
                     Interlocked.Add(ref _totalBytesSent, length);
                 }
                 else {
-                    PacketCreatorMgr_Send.GetPacketCreator(packetdata.PacketID).RecylePacket(packetdata);
+                    if (packetdata.IsComeFromPacketCreate) {
+                        PacketCreatorMgr_Send.GetPacketCreator(packetdata.PacketID).RecylePacket(packetdata);
+                    }
                     Logs.Error(string.Format("Client {0}'s SocketArgs are null", this._tcpSocket.ToString()));
                 }
             }
-            else { 
+            else {
                 //回收利用
-                PacketCreatorMgr_Send.GetPacketCreator(packetdata.PacketID).RecylePacket(packetdata);
-                Logs.Error(string.Format("Client is null or not connect_{0}", this._tcpSocket==null?"null":"false"));
+                if (packetdata.IsComeFromPacketCreate) {
+                    PacketCreatorMgr_Send.GetPacketCreator(packetdata.PacketID).RecylePacket(packetdata);
+                }
+                Logs.Error(string.Format("Client is null or not connect_{0}", this._tcpSocket == null ? "null" : "false"));
             }
         }
 
@@ -832,8 +865,8 @@ namespace NetIOCPClient
                 return;
             if (m_SendPackets.Count > 0) {
                 Packet packet = null;
-                m_SendPackets.TryDequeue(out packet);
-                if (packet != null) {
+                bool dout = m_SendPackets.TryDequeue(out packet);
+                if (dout&&packet != null) {
                     SendPacketImmediate(packet);
                 }
             }
@@ -866,8 +899,8 @@ namespace NetIOCPClient
                 Packet p = null;//这里处理包的回收
                 int pid = -1;
                 try {
-                    m_RecivePackets.TryDequeue(out p);//处理包
-                    if (p != null && OnRecvData != null) {
+                    bool dout = m_RecivePackets.TryDequeue(out p);//处理包
+                    if (dout&&p != null && OnRecvData != null) {
                         pid = p.PacketID;
 #if DEBUG
                         ProfInstance pi = Profile.StartProf();
@@ -932,6 +965,7 @@ namespace NetIOCPClient
                         Packet packet = (args.UserToken as Packet);
                         if (packet != null && args.BytesTransferred < packet.PacketBufLen) {
                             //TODO:当前缓存没有发送完成
+                            Logs.Warn(string.Format("异步发送包 {0} 没有完成：发送长度 {1} 包原始长度 {2} ", packet.PacketID, args.BytesTransferred, packet.PacketBufLen));
                             int i = 0; ;
                         }
                         else {
@@ -954,10 +988,10 @@ namespace NetIOCPClient
             }
             finally {
                 Packet packet = (args.UserToken as Packet);
-                if (packet != null) {
+                if (packet != null && packet.IsComeFromPacketCreate) {
                     //回收包,以便重复利用
                     (packet.Token as NetClientBase).PacketCreatorMgr_Send.GetPacketCreator(packet.PacketID).RecylePacket(packet);
-                }                
+                }
                 SocketHelpers.ReleaseSocketArg(args);
             }
         }
@@ -1105,7 +1139,9 @@ namespace NetIOCPClient
             _tcpSocket.NoDelay = m_NoDelay;
             _offset = 0;
             _remainingLength = 0;
-            this._bufferSegment.DecrementUsage();//回收
+            if (this._bufferSegment != null) {
+                this._bufferSegment.DecrementUsage();//回收
+            }
             this._bufferSegment = Buffers.CheckOut();//获取新的片段
         }
 
@@ -1146,15 +1182,15 @@ namespace NetIOCPClient
         void ClearSendAndRecivedQuene() {
             while (m_SendPackets.Count > 0) {
                 Packet p = null;
-                m_SendPackets.TryDequeue(out p);
-                if (p != null) {
+                bool dout = m_SendPackets.TryDequeue(out p);
+                if (dout&&p != null && p.IsComeFromPacketCreate) {
                     this.PacketCreatorMgr_Send.GetPacketCreator(p.PacketID).RecylePacket(p);
                 }
             }
             while (m_RecivePackets.Count > 0) {
-                Packet p = null;
-                m_RecivePackets.TryDequeue(out p);
-                if (p != null) {
+               Packet p = null;
+               bool dout= m_RecivePackets.TryDequeue(out p);
+               if (dout&&p != null) {
                     this.PacketCreatorMgr_Recived.GetPacketCreator(p.PacketID).RecylePacket(p);
                 }
             }
@@ -1177,6 +1213,7 @@ namespace NetIOCPClient
             m_Connected = false;
             ClearSendAndRecivedQuene();
             _bufferSegment.DecrementUsage();
+            _bufferSegment = null;
             if (_tcpSocket != null) {
                 try {
                     if (_tcpSocket.Connected) {

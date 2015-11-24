@@ -35,6 +35,15 @@ namespace NetIOCPClient.NetWork
         //    _packetPool.ReleaseContent(p);//通过缓存池，就没必要每次都new出来了，packet.buffer要动态关联片段
         //}
         public abstract PoolInfo GetPoolInfo();
+        public abstract IPoolInfo _Pool { get; }
+        /// <summary>
+        /// 清除缓存
+        /// </summary>
+        public virtual void Clear() {           
+            if (_Pool != null) {
+                _Pool.Free();
+            }
+        }
     }
 
 

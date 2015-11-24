@@ -6,6 +6,9 @@ using NetIOCPClient.Core;
 
 namespace NetIOCPClient.NetWork.Other
 {
+    /// <summary>
+    /// 半环形数组,适用于接受数据缓存
+    /// </summary>
     public class ByteQueue
     {
         private int m_Head;
@@ -21,7 +24,9 @@ namespace NetIOCPClient.NetWork.Other
         public ByteQueue() {
             m_Buffer = new byte[2048];
         }
-
+        /// <summary>
+        /// 清理数据
+        /// </summary>
         public void Clear() {
             m_Head = 0;
             m_Tail = 0;
@@ -67,7 +72,13 @@ namespace NetIOCPClient.NetWork.Other
             }
             return 0;
         }
-
+        /// <summary>
+        /// 取出指定大小数据
+        /// </summary>
+        /// <param name="buffer">目标数据</param>
+        /// <param name="offset">目标数据开始位置</param>
+        /// <param name="size">取出的数据长度</param>
+        /// <returns></returns>
         public int Dequeue(byte[] buffer, int offset, int size) {
             if (size > m_Size)
                 size = m_Size;
@@ -93,17 +104,22 @@ namespace NetIOCPClient.NetWork.Other
             m_Head = (m_Head + size) % m_Buffer.Length;
             m_Size -= size;
 
-            if (m_Size == 0) {
+            if (m_Size == 0) {//数据取完 ，指针移到开始的位置
                 m_Head = 0;
                 m_Tail = 0;
             }
 
             return size;
         }
-
+        /// <summary>
+        /// 压入数据指定数据 
+        /// </summary>
+        /// <param name="buffer">指定数据</param>
+        /// <param name="offset">指定数据的偏移位置</param>
+        /// <param name="size">压入的数据长度</param>
         public void Enqueue(byte[] buffer, int offset, int size) {
             if ((m_Size + size) > m_Buffer.Length)
-                SetCapacity((m_Size + size + 2047) & ~2047);
+                SetCapacity((m_Size + size + 2047) & ~2047);//不够按指定增加长度扩展
 
             if (m_Head < m_Tail) {
                 int rightLength = (m_Buffer.Length - m_Tail);
