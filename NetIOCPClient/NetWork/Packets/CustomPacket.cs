@@ -59,7 +59,10 @@ namespace NetIOCPClient.Core
          protected override void _initBuffer() {
             this.Buffer = BufferManager.Large.CheckOut();
         }
-
+         public override void ClearContent() {
+             //todo:清理额外的对象内容缓存,防止内存溢出
+             MsgData = null;
+         }
     }
 
     class CustomPacketCreator : PacketCreator
@@ -83,6 +86,7 @@ namespace NetIOCPClient.Core
             if (p.Buffer.Uses == 0) {
                 p.Buffer = null;
             }
+            p.ClearContent();
             _packetPool.ReleaseContent(p as CustomPacket);
         }
        

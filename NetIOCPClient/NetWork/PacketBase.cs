@@ -7,11 +7,14 @@ using System.Text;
 
 namespace NetIOCPClient.NetWork
 {
+    public interface IClearPacketContent:IDisposable {
+        void ClearContent();
+    }
 
     /// <summary>
     ///基础类
     /// </summary>
-    public abstract class PacketBase : INETPacket, IDisposable
+    public abstract class PacketBase : INETPacket, IClearPacketContent
     {
 
         /// <summary>
@@ -68,7 +71,7 @@ namespace NetIOCPClient.NetWork
         }
 
 
-        public abstract void Dispose();
+      
 
         /// <summary>
         ///数据加密，最快最简单的加密方式 请使用XOR加密方式
@@ -88,6 +91,8 @@ namespace NetIOCPClient.NetWork
         public virtual void Decode(byte[] buf, int offset, int len) {
             
         }
+        public abstract void Dispose();
+        public abstract void ClearContent();
     }
 
 }

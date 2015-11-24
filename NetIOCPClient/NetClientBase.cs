@@ -501,6 +501,7 @@ namespace NetIOCPClient
             }
             finally {
                 args.Completed -= ReceiveAsyncComplete;
+                args.UserToken = null;//取消关联
                 SocketHelpers.ReleaseSocketArg(args);
             }
         }
@@ -731,7 +732,7 @@ namespace NetIOCPClient
                 m_SendPackets.Enqueue(packet);
                 //如果在此之前，数据空了，那就发一次
                 if (!addToSendQuene) {
-                    PeekSend();
+                    PeekPendingPacketToSend();
                 }
             }
         }
@@ -860,7 +861,7 @@ namespace NetIOCPClient
         /// 接收包列队
         /// </summary>
         NetQueue<Packet> m_RecivePackets = new NetQueue<Packet>(1024);
-        protected void PeekSend() {
+        protected void PeekPendingPacketToSend() {
             if (m_IsClosed || !m_Connected)
                 return;
             if (m_SendPackets.Count > 0) {
@@ -892,7 +893,7 @@ namespace NetIOCPClient
                     break;//每次最大发送数量
                 }
                 //对处理速度限制
-                PeekSend();
+                PeekPendingPacketToSend();
             }
             //对接收包处理
             while (m_RecivePackets.Count > 0) {
@@ -967,6 +968,7 @@ namespace NetIOCPClient
                             //TODO:当前缓存没有发送完成
                             Logs.Warn(string.Format("异步发送包 {0} 没有完成：发送长度 {1} 包原始长度 {2} ", packet.PacketID, args.BytesTransferred, packet.PacketBufLen));
                             int i = 0; ;
+                            System.Threading.Thread.Sleep(1000 * 10);
                         }
                         else {
                         }
@@ -987,11 +989,15 @@ namespace NetIOCPClient
                 }
             }
             finally {
-                Packet packet = (args.UserToken as Packet);
+                Packet packet = (args.UserToken as Packet);               
+              
                 if (packet != null && packet.IsComeFromPacketCreate) {
-                    //回收包,以便重复利用
-                    (packet.Token as NetClientBase).PacketCreatorMgr_Send.GetPacketCreator(packet.PacketID).RecylePacket(packet);
-                }
+                    //回收包,以便重复利用    
+                    NetClientBase client=(packet.Token as NetClientBase); 
+                    packet.Token = null;//取消关联
+                    client.PacketCreatorMgr_Send.GetPacketCreator(packet.PacketID).RecylePacket(packet);                   
+                } 
+                args.UserToken = null;//取消关联
                 SocketHelpers.ReleaseSocketArg(args);
             }
         }

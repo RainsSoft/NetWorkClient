@@ -45,7 +45,9 @@ namespace NetIOCPClient.Core
         protected override void _initBuffer() {
             this.Buffer = BufferManager.Tiny.CheckOut();
         }
-
+        public override void ClearContent() {
+            //todo:清理额外的对象内容缓存,防止内存溢出
+        }
     }
 
     class HeatbeatPacketCreator : PacketCreator
@@ -69,6 +71,7 @@ namespace NetIOCPClient.Core
             if (p.Buffer.Uses == 0) {
                 p.Buffer = null;
             }
+            p.ClearContent();//
             _packetPool.ReleaseContent(p as HeatbeatPacket);
         }
        
