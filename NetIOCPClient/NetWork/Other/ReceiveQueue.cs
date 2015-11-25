@@ -1,24 +1,34 @@
 ﻿
 
 using System;
+using System.Threading;
 using NetIOCPClient.Core;
 
 
-namespace NetIOCPClient.NetWork.Other
+namespace NetIOCPClient.NetWork.Data
 {
     /// <summary>
-    /// 半环形数组,适用于接受数据缓存
+    /// 环形缓冲区,适用于接受数据缓存
     /// </summary>
     public class ByteQueue
     {
+        /// <summary>
+        /// 字节头位置
+        /// </summary>
         private int m_Head;
+        /// <summary>
+        /// 字节尾位置
+        /// </summary>
         private int m_Tail;
+        /// <summary>
+        /// 剩下字节大小
+        /// </summary>
         private int m_Size;
         /// <summary>
         /// 长度为2048
         /// </summary>
         private byte[] m_Buffer;
-
+        private readonly ReaderWriterLockSlim m_lock = new ReaderWriterLockSlim(); 
         public int Length { get { return m_Size; } }
 
         public ByteQueue() {
@@ -28,11 +38,16 @@ namespace NetIOCPClient.NetWork.Other
         /// 清理数据
         /// </summary>
         public void Clear() {
+            m_lock.EnterWriteLock();
             m_Head = 0;
             m_Tail = 0;
             m_Size = 0;
+            m_lock.ExitWriteLock();
         }
-
+        /// <summary>
+        /// 修改环形缓冲byte[]大小
+        /// </summary>
+        /// <param name="capacity"></param>
         private void SetCapacity(int capacity) {
             byte[] newBuffer = new byte[capacity];
 
@@ -78,38 +93,44 @@ namespace NetIOCPClient.NetWork.Other
         /// <param name="buffer">目标数据</param>
         /// <param name="offset">目标数据开始位置</param>
         /// <param name="size">取出的数据长度</param>
-        /// <returns></returns>
+        /// <returns>返回取出成功的字节长度</returns>
         public int Dequeue(byte[] buffer, int offset, int size) {
-            if (size > m_Size)
-                size = m_Size;
+            try {
+                m_lock.EnterReadLock();
+                if (size > m_Size)
+                    size = m_Size;//不能超过最大长度
 
-            if (size == 0)
-                return 0;
+                if (size == 0)
+                    return 0;
 
-            if (m_Head < m_Tail) {
-                Buffer.BlockCopy(m_Buffer, m_Head, buffer, offset, size);
-            }
-            else {
-                int rightLength = (m_Buffer.Length - m_Head);
-
-                if (rightLength >= size) {
-                    Buffer.BlockCopy(m_Buffer, m_Head, buffer, offset, size);
+                if (m_Head < m_Tail) {
+                    Buffer.BlockCopy(m_Buffer, m_Head, buffer, offset, size);//尾部指针没没有超过起始指针
                 }
                 else {
-                    Buffer.BlockCopy(m_Buffer, m_Head, buffer, offset, rightLength);
-                    Buffer.BlockCopy(m_Buffer, 0, buffer, offset + rightLength, size - rightLength);
+                    int rightLength = (m_Buffer.Length - m_Head);//剩下的长度
+                    //对尾部指针大于或等于开始指针的处理
+                    if (rightLength >= size) {
+                        Buffer.BlockCopy(m_Buffer, m_Head, buffer, offset, size);//剩下的长度能完全取出指定长度
+                    }
+                    else {
+                        Buffer.BlockCopy(m_Buffer, m_Head, buffer, offset, rightLength);//复制剩下的长度
+                        Buffer.BlockCopy(m_Buffer, 0, buffer, offset + rightLength, size - rightLength);//把尾部部分复制出来
+                    }
                 }
+
+                m_Head = (m_Head + size) % m_Buffer.Length;//修改头位置，以buffer的长度来取
+                m_Size -= size;
+
+                if (m_Size == 0) {//数据取完 ，指针移到开始的位置
+                    m_Head = 0;
+                    m_Tail = 0;
+                }
+
+                return size;
             }
-
-            m_Head = (m_Head + size) % m_Buffer.Length;
-            m_Size -= size;
-
-            if (m_Size == 0) {//数据取完 ，指针移到开始的位置
-                m_Head = 0;
-                m_Tail = 0;
+            finally {
+                m_lock.ExitReadLock();
             }
-
-            return size;
         }
         /// <summary>
         /// 压入数据指定数据 
@@ -118,26 +139,32 @@ namespace NetIOCPClient.NetWork.Other
         /// <param name="offset">指定数据的偏移位置</param>
         /// <param name="size">压入的数据长度</param>
         public void Enqueue(byte[] buffer, int offset, int size) {
-            if ((m_Size + size) > m_Buffer.Length)
-                SetCapacity((m_Size + size + 2047) & ~2047);//不够按指定增加长度扩展
+            try {
+                m_lock.ExitWriteLock();
+                if ((m_Size + size) > m_Buffer.Length)
+                    SetCapacity((m_Size + size + 2047) & ~2047);//总是以2048的倍数来增大字节数
 
-            if (m_Head < m_Tail) {
-                int rightLength = (m_Buffer.Length - m_Tail);
+                if (m_Head < m_Tail) {//一般情况
+                    int rightLength = (m_Buffer.Length - m_Tail);
 
-                if (rightLength >= size) {
-                    Buffer.BlockCopy(buffer, offset, m_Buffer, m_Tail, size);
+                    if (rightLength >= size) {//剩下的长度能完全容纳
+                        Buffer.BlockCopy(buffer, offset, m_Buffer, m_Tail, size);
+                    }
+                    else {
+                        Buffer.BlockCopy(buffer, offset, m_Buffer, m_Tail, rightLength);
+                        Buffer.BlockCopy(buffer, offset + rightLength, m_Buffer, 0, size - rightLength);
+                    }
                 }
                 else {
-                    Buffer.BlockCopy(buffer, offset, m_Buffer, m_Tail, rightLength);
-                    Buffer.BlockCopy(buffer, offset + rightLength, m_Buffer, 0, size - rightLength);
+                    Buffer.BlockCopy(buffer, offset, m_Buffer, m_Tail, size);
                 }
-            }
-            else {
-                Buffer.BlockCopy(buffer, offset, m_Buffer, m_Tail, size);
-            }
 
-            m_Tail = (m_Tail + size) % m_Buffer.Length;
-            m_Size += size;
+                m_Tail = (m_Tail + size) % m_Buffer.Length;
+                m_Size += size;
+            }
+            finally {
+                m_lock.ExitWriteLock();
+            }
         }
     }
     //    /// <summary>

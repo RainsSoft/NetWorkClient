@@ -10,6 +10,7 @@ using NetIOCPClient.NetWork;
 using NetIOCPClient.Log;
 using NetIOCPClient.Core;
 using NetIOCPClient.Util;
+using NetIOCPClient.NetWork.Data;
 //using NLog;
 
 namespace NetIOCPClient
@@ -75,10 +76,12 @@ namespace NetIOCPClient
         /// 是否启用前置处理.
         /// 用来处理包id前的标识性数据
         /// </summary>
+        [Obsolete()]
         public bool IsPrepareModel = false;
         /// <summary>
         /// 前置处理的数据长度
         /// </summary>
+        [Obsolete()]
         internal int PrepareDataSize = 0;
         /// <summary>
         /// 发送字节总数G/M/K/B
@@ -278,8 +281,8 @@ namespace NetIOCPClient
         /// <summary>
         /// The port the client should receive UDP datagrams on.
         /// </summary>
-        [Obsolete()]
-        protected IPEndPoint _udpEndpoint;
+        //[Obsolete()]
+        //protected IPEndPoint _udpEndpoint;
 
 
 
@@ -296,6 +299,8 @@ namespace NetIOCPClient
         protected NetClientBase(/*ServerBase server*/) {
             //_server = server;
             _bufferSegment = Buffers.CheckOut();
+            //发送分片尺寸
+            SendQueue.CoalesceBufferSize = MaxPacketSize;//BufferSize;
             //m_Buf[100] = new HeatbeatPacketCreator();
             //m_Buf[101] = new TimeSynPacketCreator();
             //m_Buf[99] = new CustomPacketCreator();
@@ -414,6 +419,7 @@ namespace NetIOCPClient
 
                 socketArgs.SetBuffer(this._bufferSegment.Buffer.Array, this._bufferSegment.Offset + offset, BufferSize - offset);
                 socketArgs.UserToken = this;
+                socketArgs.Completed -= ReceiveAsyncComplete;
                 socketArgs.Completed += ReceiveAsyncComplete;
 
                 bool willRaiseEvent = _tcpSocket.ReceiveAsync(socketArgs);
@@ -502,6 +508,7 @@ namespace NetIOCPClient
             finally {
                 args.Completed -= ReceiveAsyncComplete;
                 args.UserToken = null;//取消关联
+                args.SetBuffer(null, 0, 0);
                 SocketHelpers.ReleaseSocketArg(args);
             }
         }
@@ -604,7 +611,7 @@ namespace NetIOCPClient
                             //保证包的片段能存入比原始内容长的数据
                             p.Buffer = BufferManager.GetSegment(packetFullLength);// > oldLen ? packetFullLength : oldLen);//取新的片段，根据长度
                             if (oldseg != null) {
-                                System.Diagnostics.Debug.Assert(oldseg.Uses==1);
+                                System.Diagnostics.Debug.Assert(oldseg.Uses == 1);
                                 oldseg.DecrementUsage();//回收老片段,因为同样的包大小一般是一致的，所以其利用率还是比较高的
                                 oldseg = null;
                             }
@@ -646,61 +653,87 @@ namespace NetIOCPClient
         /// Asynchronously sends a packet of data to the client.
         /// </summary>
         /// <param name="packet">An array of bytes containing the packet to be sent.</param>
-        internal void Send(byte[] packet) {
-            Send(packet, 0, packet.Length);
+        public void Send(byte[] packet) {
+            Send(packet, 0, packet.Length, false);
         }
-
-        private void SendCopy(byte[] packet) {
-            var copy = new byte[packet.Length];
-            Array.Copy(packet, copy, packet.Length);
-            Send(copy, 0, copy.Length);
-        }
-
+        /// <summary>
+        /// segment外面注意自己回收
+        /// </summary>
+        /// <param name="segment"></param>
+        /// <param name="length"></param>
         private void Send(BufferSegment segment, int length) {
-            Send(segment.Buffer.Array, segment.Offset, length);
+            Send(segment.Buffer.Array, segment.Offset, length, false);
         }
-
-
 
         /// <summary>
+        /// copy模式直接发送指定byte[]中的一段数据，非线程安全，适用于测试场合
+        /// </summary>
+        /// <param name="packet"></param>
+        /// <param name="offset"></param>
+        /// <param name="length"></param>
+        public void SendCopy(byte[] packet, int offset, int length) {
+            byte[] copy = new byte[length];
+            Array.Copy(packet, offset, copy, 0, length);
+            Send(copy, 0, copy.Length, false);
+        }
+        /// <summary>
         /// Asynchronously sends a packet of data to the client.
-        /// 单独直接发送指定的 byte[]数据内容到服务端，这里不对byte[] packet进行包装或者修改,外面保证其内容的合法性
-        /// 非线程安全，经过测试，如果发送不在相同的线程可能会造成发送数据不完全的问题，当前方法适合用于测试场景
+        /// 单独直接发送指定的 byte[]数据内容到服务端，这里不对byte[]做额外的包装，比如分包,外面保证其内容的合法性(包长+包内容)
+        /// 非线程安全，经过测试，如果发送不在相同的线程可能会造成发送数据不完全的问题
         /// </summary>
         /// <param name="packet">An array of bytes containing the packet to be sent.</param>
-        /// <param name="length">长度大小有限制，不能超64K。The number of bytes to send starting at offset.</param>
+        /// <param name="length">长度大小有限制，不能超64K,如果是分段发送，则没有限制。The number of bytes to send starting at offset.</param>
         /// <param name="offset">The offset into packet where the sending begins.</param>
-        public virtual void Send(byte[] packet, int offset, int length) {
+        public virtual void Send(byte[] packet, int offset, int length, bool bytesSplit) {
             if (_tcpSocket != null && _tcpSocket.Connected) {
-                SocketAsyncEventArgs args = SocketHelpers.AcquireSocketArg();
-                if (args != null) {
-                    args.Completed += SendAsyncComplete;
-                    //if packet内容太多，需要分包发送
-                    args.SetBuffer(packet, offset, length);
-                    //BufferSegment sendseg = BufferManager.GetSegment(length);
-                    //sendseg.CopyStartFromBytes(0, packet, offset, length);
-                    //PacketCreator creater=PacketCreatorMgr.GetPacketCreator(CustomPacket._PacketID);
-                    //CustomPacket sp = null;
-                    //if (creater != null) {
-                    //    sp =creater.CreatePacket() as CustomPacket;
-                    //    sp.Token = this;
-                    //    sp.MsgData = packet;
-                    //    sp.Write();
-                    //    args.UserToken = sp;
-                    //}
-                    ////开始发送
+                if (bytesSplit) {
+                    //分包发送模式
+                    //开始发送
                     if (OnSend != null) {
                         OnSend(this, null);
                     }
+                    SendQueue.Gram gram = null;
+                    gram = m_SendQueueGram.Enqueue(packet, offset, length);//多线程
+                    if (gram == null) {
+                        gram = m_SendQueueGram.CheckFlushReady();//检测是否没有发送完成
+                    }
+                    while (gram != null) {
+                        DoSendBySplit(gram);
+                        gram = m_SendQueueGram.Dequeue();
+                        if (gram == null) {
+                            gram = m_SendQueueGram.CheckFlushReady();//检测是否有小片段没有发送完成
+                        }
+                    }
+                    return;
+                }
+                SocketAsyncEventArgs args = SocketHelpers.AcquireSocketArg();
+                if (args != null) {
+                    args.Completed -= SendAsyncComplete;
+                    args.Completed += SendAsyncComplete;
+                    //if packet内容太多，需要分包发送                   
+                    args.SetBuffer(packet, offset, length);
+                    //开始发送
+                    if (OnSend != null) {
+                        OnSend(this, null);
+                    }
+                reSent1:
                     bool doResult = false;
-                    try {
-                        doResult = _tcpSocket.SendAsync(args);
-                    }
-                    catch {
-                        int edoResult = 0;
-                    }
-                    if (!doResult && _tcpSocket != null) {
-                        SendAsyncComplete(_tcpSocket, args);
+                    doResult = _tcpSocket.SendAsync(args);
+                    if (!doResult) {
+                        if (args.BytesTransferred == 0 &&
+                            args.SocketError == SocketError.Success &&
+                            this.IsConnected) {
+                            Logs.Warn("发送packet 没有引发结束事件响应，但连接还没有断开，尝试重新发送...");
+#if DEBUG
+                            System.Diagnostics.Debug.Assert(false, "发送packet 没有引发结束事件响应，但连接还没有断开，尝试重新发送...");
+                            System.Threading.Thread.Sleep(1000 * 3);
+#endif
+                            goto reSent1;//还没有断开连接，重新发送,否则包会丢？还是会造成重复发送？
+                        }
+                        else {
+                            SendAsyncComplete(_tcpSocket, args);
+                        }
+                        //
                     }
                     unchecked {
                         _bytesSent += (uint)length;
@@ -709,29 +742,93 @@ namespace NetIOCPClient
                     Interlocked.Add(ref _totalBytesSent, length);
                 }
                 else {
-                    Logs.Error(string.Format("Client {0}'s SocketArgs are null", this._tcpSocket.ToString()));
+                    Logs.Error(string.Format("Client {0}'s SocketArgs are null", this.Name));
                 }
             }
         }
+        /// <summary>
+        /// 分块发送
+        /// </summary>
+        protected void DoSendBySplit(SendQueue.Gram gram) {
+            if (_tcpSocket != null && _tcpSocket.Connected) {
+                SocketAsyncEventArgs args = SocketHelpers.AcquireSocketArg();
+                if (args != null) {
+                    args.Completed -= SendAsyncComplete;
+                    args.Completed += SendAsyncComplete;
+
+                    args.SetBuffer(gram.Buffer, 0, gram.Length);
+                reSent2:
+                    bool doResult = false;
+                    doResult = _tcpSocket.SendAsync(args);
+                    if (!doResult) {
+                        //ToDo:重新发送
+                        if (args.BytesTransferred == 0 &&
+                      args.SocketError == SocketError.Success &&
+                      this.IsConnected) {
+                            Logs.Warn("发送packet 没有引发结束事件响应，但连接还没有断开，尝试重新发送...");
+#if DEBUG
+                            System.Diagnostics.Debug.Assert(false, "发送packet 没有引发结束事件响应，但连接还没有断开，尝试重新发送...");
+                            System.Threading.Thread.Sleep(1000 * 3);
+#endif
+                            goto reSent2;//还没有断开连接，重新发送,否则包会丢？还是会造成重复发送？
+                        }
+                        else {
+                            SendAsyncComplete(_tcpSocket, args);
+                        }
+                        //
+                    }
+                    unchecked {
+                        _bytesSent += (uint)gram.Length;
+                    }
+
+                    Interlocked.Add(ref _totalBytesSent, gram.Length);
+                }
+                else {
+                    Logs.Error(string.Format("Client {0}'s SocketArgs are null", this.Name));
+                }
+            }
+        }
+        protected bool Flush() {
+            if (!IsConnected || !m_SendQueueGram.IsFlushReady) {
+                return false;
+            }
+
+            SendQueue.Gram gram;
+
+            //lock (m_SendQueueGram) {
+            gram = m_SendQueueGram.CheckFlushReady();
+            //}
+
+            if (gram != null) {
+                //m_SendEventArgs.SetBuffer(gram.Buffer, 0, gram.Length);
+                //Send_Start();
+            }
+
+            return false;
+        }
+        /// <summary>
+        /// 分段发送列队
+        /// </summary>
+        protected SendQueue m_SendQueueGram = new SendQueue();
         #endregion
 
         #region 基于包Packet列队 异步IOCP模式发送
 
         /// <summary>
-        /// 把要发送的数据包加入到发送缓存里面
+        /// 把要发送的数据包加入到发送缓存里面,外面保证packet的send buffer segment的尺寸最大不能超过64k
         /// 如果不加入发送列队，则非线程安全的，经过测试，如果发送不在相同的线程可能会造成发送数据不完全的问题
         /// </summary>
         /// <param name="packet"></param>
-        public void Send(Packet packet,bool addToSendQuene) {
+        public void Send(Packet packet, bool pendSend) {
 
             if (IsPrepareModel) {
                 //ToDo:
             }
             else {
-                //bool needSend = (m_SendPackets.Count == 0);
+                bool canNowSend = (m_SendPackets.Count == 0);
                 m_SendPackets.Enqueue(packet);
-                //如果在此之前，数据空了，那就发一次
-                if (!addToSendQuene) {
+                //如果在此之前，数据空了，那就发一次,这里不能保证线程安全，最好是pendSend==true
+                if (!pendSend && canNowSend) {
                     PeekPendingPacketToSend();
                 }
             }
@@ -818,6 +915,7 @@ namespace NetIOCPClient
                     byte[] packet = packetdata.Buffer.Buffer.Array;
                     int offset = packetdata.Buffer.Offset;
                     int length = packetdata.PacketBufLen;
+                    args.Completed -= SendAsyncComplete;
                     args.Completed += SendAsyncComplete;
                     //packet关联的数据段 大小应该有限制的
                     args.SetBuffer(packet, offset, length);
@@ -827,9 +925,22 @@ namespace NetIOCPClient
                     if (OnSend != null) {
                         OnSend(this, packetdata);
                     }
+                reSent0:
                     bool doResult = _tcpSocket.SendAsync(args);
                     if (!doResult) {
-                        SendAsyncComplete(_tcpSocket, args);
+                        if (args.BytesTransferred == 0 &&
+                            args.SocketError == SocketError.Success &&
+                            this.IsConnected) {
+                            Logs.Warn("发送packet 没有引发结束事件响应，但连接还没有断开，尝试重新发送...");
+#if DEBUG
+                            System.Diagnostics.Debug.Assert(false, "发送packet 没有引发结束事件响应，但连接还没有断开，尝试重新发送...");
+                            System.Threading.Thread.Sleep(1000 * 3);
+#endif
+                            goto reSent0;//还没有断开连接，重新发送,否则包会丢？还是会造成重复发送？
+                        }
+                        else {
+                            SendAsyncComplete(_tcpSocket, args);
+                        }
                     }
                     unchecked {
                         _bytesSent += (uint)length;
@@ -841,7 +952,7 @@ namespace NetIOCPClient
                     if (packetdata.IsComeFromPacketCreate) {
                         PacketCreatorMgr_Send.GetPacketCreator(packetdata.PacketID).RecylePacket(packetdata);
                     }
-                    Logs.Error(string.Format("Client {0}'s SocketArgs are null", this._tcpSocket.ToString()));
+                    Logs.Error(string.Format("Client {0}'s SocketArgs are null", this.Name));
                 }
             }
             else {
@@ -849,7 +960,7 @@ namespace NetIOCPClient
                 if (packetdata.IsComeFromPacketCreate) {
                     PacketCreatorMgr_Send.GetPacketCreator(packetdata.PacketID).RecylePacket(packetdata);
                 }
-                Logs.Error(string.Format("Client is null or not connect_{0}", this._tcpSocket == null ? "null" : "false"));
+                Logs.Error(string.Format("Client {0} is null or not connect_{1}", this.Name, this.IsConnected));
             }
         }
 
@@ -867,8 +978,24 @@ namespace NetIOCPClient
             if (m_SendPackets.Count > 0) {
                 Packet packet = null;
                 bool dout = m_SendPackets.TryDequeue(out packet);
-                if (dout&&packet != null) {
-                    SendPacketImmediate(packet);
+                if (dout && packet != null) {
+                    if (IsPacketMode) {
+                        //包模式发送
+                        SendPacketImmediate(packet);
+                    }
+                    else {
+                        //数据数组模式发送
+                        //分数据段发送
+                        byte[] buf = new byte[packet.PacketBufLen];
+                        packet.Buffer.CopyToBytes(0, buf, 0, buf.Length);
+                        //packet回收
+                        if (packet.IsComeFromPacketCreate) {
+                            //回收包,以便重复利用   
+                            packet.Token = null;//取消关联
+                            this.PacketCreatorMgr_Send.GetPacketCreator(packet.PacketID).RecylePacket(packet);
+                        }
+                        Send(buf, 0, buf.Length, true);//分段发送
+                    }
                 }
             }
         }
@@ -901,7 +1028,7 @@ namespace NetIOCPClient
                 int pid = -1;
                 try {
                     bool dout = m_RecivePackets.TryDequeue(out p);//处理包
-                    if (dout&&p != null && OnRecvData != null) {
+                    if (dout && p != null && OnRecvData != null) {
                         pid = p.PacketID;
 #if DEBUG
                         ProfInstance pi = Profile.StartProf();
@@ -956,6 +1083,15 @@ namespace NetIOCPClient
                     //CloseSocket();
                     return;
                 }
+                if (args.SocketError != SocketError.Success) {
+                    //tOdO:发送失败
+                    Logs.Error("send error:" + args.SocketError.ToString());
+                    this.DisConnect();
+                    if (OnSendError != null) {
+                        OnSendError((args.UserToken as Packet), new NetException("socket sendAsyn 错误号:" + args.SocketError.ToString()));
+                    }
+
+                }
                 switch (args.LastOperation) {
                     case SocketAsyncOperation.Connect:
                         //不会出现该状态
@@ -968,7 +1104,10 @@ namespace NetIOCPClient
                             //TODO:当前缓存没有发送完成
                             Logs.Warn(string.Format("异步发送包 {0} 没有完成：发送长度 {1} 包原始长度 {2} ", packet.PacketID, args.BytesTransferred, packet.PacketBufLen));
                             int i = 0; ;
-                            System.Threading.Thread.Sleep(1000 * 10);
+#if DEBUG
+                            System.Diagnostics.Debug.Assert(false, "异步发送包 不完全");
+                            System.Threading.Thread.Sleep(1000 * 3);
+#endif
                         }
                         else {
                         }
@@ -989,15 +1128,16 @@ namespace NetIOCPClient
                 }
             }
             finally {
-                Packet packet = (args.UserToken as Packet);               
-              
+                Packet packet = (args.UserToken as Packet);
+
                 if (packet != null && packet.IsComeFromPacketCreate) {
                     //回收包,以便重复利用    
-                    NetClientBase client=(packet.Token as NetClientBase); 
+                    NetClientBase client = (packet.Token as NetClientBase);
                     packet.Token = null;//取消关联
-                    client.PacketCreatorMgr_Send.GetPacketCreator(packet.PacketID).RecylePacket(packet);                   
-                } 
+                    client.PacketCreatorMgr_Send.GetPacketCreator(packet.PacketID).RecylePacket(packet);
+                }
                 args.UserToken = null;//取消关联
+                args.SetBuffer(null, 0, 0);
                 SocketHelpers.ReleaseSocketArg(args);
             }
         }
@@ -1112,6 +1252,7 @@ namespace NetIOCPClient
                 {
                     // Init();
                     ConnectEventArgs = new SocketAsyncEventArgs();
+                    ConnectEventArgs.Completed -= OnConnectCompleted;
                     ConnectEventArgs.Completed += OnConnectCompleted;
                 }
                 if (OnConnectBegin != null) {
@@ -1148,7 +1289,7 @@ namespace NetIOCPClient
             if (this._bufferSegment != null) {
                 this._bufferSegment.DecrementUsage();//回收
             }
-            this._bufferSegment = Buffers.CheckOut();//获取新的片段
+            this._bufferSegment = Buffers.CheckOut();//获取新的片段           
         }
 
         /// <summary>
@@ -1189,17 +1330,20 @@ namespace NetIOCPClient
             while (m_SendPackets.Count > 0) {
                 Packet p = null;
                 bool dout = m_SendPackets.TryDequeue(out p);
-                if (dout&&p != null && p.IsComeFromPacketCreate) {
+                if (dout && p != null && p.IsComeFromPacketCreate) {
                     this.PacketCreatorMgr_Send.GetPacketCreator(p.PacketID).RecylePacket(p);
                 }
             }
             while (m_RecivePackets.Count > 0) {
-               Packet p = null;
-               bool dout= m_RecivePackets.TryDequeue(out p);
-               if (dout&&p != null) {
+                Packet p = null;
+                bool dout = m_RecivePackets.TryDequeue(out p);
+                if (dout && p != null) {
                     this.PacketCreatorMgr_Recived.GetPacketCreator(p.PacketID).RecylePacket(p);
                 }
             }
+            m_SendQueueGram.Clear();
+            //_bufferSegment.DecrementUsage();
+            //_bufferSegment =null;
         }
         #endregion
         #region IDisposable
@@ -1220,6 +1364,7 @@ namespace NetIOCPClient
             ClearSendAndRecivedQuene();
             _bufferSegment.DecrementUsage();
             _bufferSegment = null;
+
             if (_tcpSocket != null) {
                 try {
                     if (_tcpSocket.Connected) {

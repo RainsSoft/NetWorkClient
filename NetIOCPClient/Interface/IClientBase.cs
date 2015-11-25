@@ -46,7 +46,7 @@ namespace NetIOCPClient.Core
         /// <param name="packet">An array of bytes containing the packet to be sent.</param>
         /// <param name="length">The number of bytes to send starting at offset.</param>
         /// <param name="offset">The offset into packet where the sending begins.</param>
-		void Send(byte[] packet, int offset, int length);
+		void Send(byte[] packet, int offset, int length,bool bytesSplit);
 
 		/// <summary>
 		/// Sends the content of the given segment to the Client.

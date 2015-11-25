@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using NetIOCPClient.Pool;
 using NetIOCPClient.Util.Collections;
 
-namespace NetIOCPClient.NetWork.Other
+namespace NetIOCPClient.NetWork.Data
 {
     /// <summary>
     /// 对象(内存池)难得用一次泛型,C# 比 C++ 泛型好用好写多了 :)

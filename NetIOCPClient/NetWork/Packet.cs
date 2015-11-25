@@ -116,7 +116,7 @@ namespace NetIOCPClient.NetWork
         /// <summary>
         /// 关联数据,作为额外的对象地址关联
         /// </summary>
-        public object Token;
+        internal object Token;
        
         #endregion
         /// <summary>

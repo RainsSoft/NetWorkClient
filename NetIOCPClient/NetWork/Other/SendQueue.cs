@@ -2,14 +2,15 @@
 
 using System;
 using System.Collections.Generic;
+using NetIOCPClient.Util.Collections;
 
 
 
 
-namespace NetIOCPClient.NetWork.Other
+namespace NetIOCPClient.NetWork.Data
 {
     /// <summary>
-    /// 发送byte[]队列
+    /// 发送byte[]队列 分段发送器,缓冲慢才能发送，这样有个问题，当发送频率不高的时候，一部分数据始终取不出来
     /// </summary>
     public class SendQueue
     {
@@ -149,7 +150,7 @@ namespace NetIOCPClient.NetWork.Other
         /// <summary>
         /// 待定
         /// </summary>
-        private Queue<Gram> _pending;
+        private ConcurrentQueue<Gram> _pending;
         /// <summary>
         /// 
         /// </summary>
@@ -172,7 +173,7 @@ namespace NetIOCPClient.NetWork.Other
         }
 
         public SendQueue() {
-            _pending = new Queue<Gram>();
+            _pending = new ConcurrentQueue<Gram>();
         }
         /// <summary>
         /// 检测是否发生完毕
@@ -198,13 +199,17 @@ namespace NetIOCPClient.NetWork.Other
             Gram gram = null;
 
             if (_pending.Count > 0) {
-                _pending.Dequeue().Release();
-
+                //_pending.Dequeue().Release();
+                if (_pending.TryDequeue(out gram)) {
+                    gram.Release();//???why
+                }
+                gram = null;
                 if (_pending.Count > 0) {
-                    gram = _pending.Peek();
+                    //gram = _pending.Peek();
+                    _pending.TryPeek(out gram);
                 }
             }
-
+            
             return gram;
         }
         /// <summary>
@@ -221,7 +226,7 @@ namespace NetIOCPClient.NetWork.Other
             return Enqueue(buffer, 0, length);
         }
         /// <summary>
-        /// 压入要发送的数据
+        /// 压入要发送的数据,并返回第一个
         /// </summary>
         /// <param name="buffer"></param>
         /// <param name="offset"></param>
@@ -281,7 +286,11 @@ namespace NetIOCPClient.NetWork.Other
             }
 
             while (_pending.Count > 0) {
-                _pending.Dequeue().Release();
+                //_pending.Dequeue().Release();
+                Gram gram = null;
+                if (_pending.TryDequeue(out gram)) {
+                    gram.Release();
+                }
             }
         }
     }
@@ -289,7 +298,7 @@ namespace NetIOCPClient.NetWork.Other
     public sealed class CapacityExceededException : Exception
     {
         public CapacityExceededException()
-            : base("Too much data pending.") {
+            : base("send Qunene: Too much data pending.") {
         }
     }
 

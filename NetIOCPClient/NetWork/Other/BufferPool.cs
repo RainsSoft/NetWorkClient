@@ -7,7 +7,7 @@ using NetIOCPClient.Util.Collections;
 
 
 
-namespace NetIOCPClient.NetWork.Other
+namespace NetIOCPClient.NetWork.Data
 {
     //[MultiThreadedSupport("zh-CHS", "当前的类所有成员都可锁定,支持多线程操作")]
     /// <summary>
