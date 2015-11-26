@@ -29,7 +29,7 @@ namespace NetIOCPClient.Core
         /// <summary>
         /// Gets/Sets the socket this client is using for TCP communication.
         /// </summary>
-        Socket @Socket { get; set; }
+        Socket @Socket { get;  }
 
 		bool IsConnected { get; }
         void ProcessSendAndRecivedPackets();

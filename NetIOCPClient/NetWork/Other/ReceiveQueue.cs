@@ -70,22 +70,30 @@ namespace NetIOCPClient.NetWork.Data
         /// </summary>
         /// <returns></returns>
         public ushort GetPacketID() {
+            m_lock.EnterReadLock();
+            ushort pid = ushort.MaxValue;           
             if (m_Size >= 2) {
-                return BitConverter.ToUInt16(m_Buffer, m_Head);
-                //return m_Buffer[m_Head];
+                //pid= BitConverter.ToUInt16(m_Buffer, m_Head);
+                //return m_Buffer[m_Head];//old
+                pid=   (ushort)((m_Buffer[(m_Head ) % m_Buffer.Length] << 8) | m_Buffer[(m_Head + 1) % m_Buffer.Length]);
             }
-            return ushort.MaxValue;
+            m_lock.ExitReadLock();
+            return pid;
         }
         /// <summary>
         /// 包结构是 packetid(ushort2)+packetLength(ushort2)
         /// </summary>
         /// <returns></returns>
-        public ushort GetPacketLength() {
+        public ushort GetPacketLength() {  
+            m_lock.EnterReadLock();
+            ushort len = 0;
             if (m_Size >= 4) {
                 //return (m_Buffer[(m_Head + 1) % m_Buffer.Length] << 8) | m_Buffer[(m_Head + 2) % m_Buffer.Length];
-                return BitConverter.ToUInt16(m_Buffer, m_Head + 2);
+                len= (ushort)((m_Buffer[(m_Head + 2) % m_Buffer.Length] << 8) | m_Buffer[(m_Head + 3) % m_Buffer.Length]);
+                //return BitConverter.ToUInt16(m_Buffer, m_Head + 2);
             }
-            return 0;
+            m_lock.ExitReadLock();
+            return len;
         }
         /// <summary>
         /// 取出指定大小数据

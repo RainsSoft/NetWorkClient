@@ -11,7 +11,7 @@ using NetIOCPClient.Log;
 using NetIOCPClient.Core;
 using NetIOCPClient.Util;
 using NetIOCPClient.NetWork.Data;
-//using NLog;
+//
 
 namespace NetIOCPClient
 {
@@ -39,6 +39,7 @@ namespace NetIOCPClient
     /// <seealso cref="ServerBase"/>
     public abstract partial class NetClientBase : IClient
     {
+        #region event
         public event EventHandler OnConnectBegin;//开始连接
         public event Action<SocketError> OnConncetEnd;//连接结果
         //public event EventHandler OnConncetTimeOut;//连接失败
@@ -60,15 +61,17 @@ namespace NetIOCPClient
         /// </summary>
         //public static PacketHasNoRPCCallbackHandler OnRecivedBCPacketEvent;
         public event ClientRecvDataHandler OnRecvData;
-        public ClientNetworkStatus Status;
+
         /// <summary>
         /// 接收到包数据时引发的事件,IsPacketMode=false时有效
         /// </summary>
         public event RecvDataBytesHandler OnRecvDataBytes;
+        #endregion
 
+        public ClientNetworkStatus Status;
         /// <summary>
         /// 是否采用包模式,默认为true
-        /// 如果不是采用包模式.
+        /// 如果不是采用包模式.则使用分段模式发送
         /// </summary>
         public bool IsPacketMode = true;
         public string Name = string.Empty;
@@ -157,9 +160,9 @@ namespace NetIOCPClient
             sb.Append("\n");
 
             sb.Append("接收:");
-            sb.Append(_bytesReceived);
+            sb.Append(this.RecivedBytesData);
             sb.Append(" 发送:");
-            sb.Append(_bytesSent);
+            sb.Append(this.SendBytesData);
             sb.Append(" 单位(字节)\n");
 
             //sb.Append("接收缓冲:");
@@ -172,6 +175,9 @@ namespace NetIOCPClient
             return sb.ToString();
         }
         private bool m_NoDelay = true;
+        /// <summary>
+        /// 是否非延时发送，默认true
+        /// </summary>
         public bool NoDelay {
             get {
                 return m_NoDelay;
@@ -209,15 +215,13 @@ namespace NetIOCPClient
         /// </summary>
         public ComponentManager ComponentMgr = new ComponentManager();
         /// <summary>
-        /// 设定包的最大尺寸1k,大于该尺寸的包应该分包处理
+        /// 分段发送包的最大尺寸（1k）
         /// </summary>
         public const int MaxPacketSize = 1024 * 1;
-
-        //private static readonly Logger Logs ;//= LogManager.GetCurrentClassLogger();
-
         //public const int MinBufferSize = 1024;
         /// <summary>
-        ///const 8KB 默认
+        ///客户端每次接收缓存bytes尺寸： const 8KB 默认
+        ///接收包的每个包数据长度最大的尺寸，如果超过该尺寸，直接断开
         /// </summary>
         public const int BufferSize = NetIOCPClientDef.MAX_PBUF_SEGMENT_SIZE;
         /// <summary>
@@ -267,22 +271,7 @@ namespace NetIOCPClient
         /// </summary>
         private uint _bytesSent;
 
-        /// <summary>
-        /// The socket containing the TCP connection this client is using.
-        /// 当前client使用的socket 连接
-        /// </summary>
-        protected Socket _tcpSocket = null;//new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-        /// <summary>
-        /// Pointer to the server this client is connected to.
-        /// </summary>
-        //protected ServerBase _server;
-
-        /// <summary>
-        /// The port the client should receive UDP datagrams on.
-        /// </summary>
-        //[Obsolete()]
-        //protected IPEndPoint _udpEndpoint;
 
 
 
@@ -292,42 +281,10 @@ namespace NetIOCPClient
 
 
         #endregion
-        /// <summary>
-        /// Default constructor
-        /// </summary>
-        /// <param name="server">The server this client is connected to.</param>
-        protected NetClientBase(/*ServerBase server*/) {
-            //_server = server;
-            _bufferSegment = Buffers.CheckOut();
-            //发送分片尺寸
-            SendQueue.CoalesceBufferSize = MaxPacketSize;//BufferSize;
-            //m_Buf[100] = new HeatbeatPacketCreator();
-            //m_Buf[101] = new TimeSynPacketCreator();
-            //m_Buf[99] = new CustomPacketCreator();
-            //下面为默认构造器
-            this.PacketCreatorMgr_Send.RegistePacket((ushort)100, new HeatbeatPacketCreator());
-            this.PacketCreatorMgr_Send.RegistePacket((ushort)101, new TimeSynPacketCreator());
-            this.PacketCreatorMgr_Send.RegistePacket((ushort)99, new CustomPacketCreator());
-            //
-            this.PacketCreatorMgr_Recived.RegistePacket((ushort)100, new HeatbeatPacketCreator());
-            this.PacketCreatorMgr_Recived.RegistePacket((ushort)101, new TimeSynPacketCreator());
-            this.PacketCreatorMgr_Recived.RegistePacket((ushort)99, new CustomPacketCreator());
-            _InitClient();
-        }
-        public NetClientBase(string name)
-            : this() {
-            this.Name = name;
-        }
-        /// <summary>
-        /// 客户端的基本初始化
-        /// </summary>
-        protected abstract void _InitClient();
+
         #region Public properties
 
-        //public ServerBase Server
-        //{
-        //    get { return _server; }
-        //}
+
         /// <summary>
         /// Gets the IP address of the client.
         /// 当前client IP
@@ -350,14 +307,6 @@ namespace NetIOCPClient
             }
         }
 
-        /// <summary>
-        /// Gets the port the client should receive UDP datagrams on.
-        /// </summary>
-        //[Obsolete()]
-        //public IPEndPoint UdpEndpoint {
-        //    get { return _udpEndpoint; }
-        //    set { _udpEndpoint = value; }
-        //}
 
         /// <summary>
         /// Gets/Sets the socket this client is using for TCP communication.
@@ -365,17 +314,37 @@ namespace NetIOCPClient
         /// </summary>
         public Socket @Socket {
             get { return _tcpSocket; }
-            set {
-                if (_tcpSocket != null && _tcpSocket.Connected) {
-                    _tcpSocket.Shutdown(SocketShutdown.Both);
-                    _tcpSocket.Close();
-                }
+            //set {
+            //    if (_tcpSocket != null && _tcpSocket.Connected) {
+            //        _tcpSocket.Shutdown(SocketShutdown.Both);
+            //        _tcpSocket.Close();
+            //    }
 
-                if (value != null) {
-                    _tcpSocket = value;
-                }
-            }
+            //    if (value != null) {
+            //        _tcpSocket = value;
+            //    }
+            //}
         }
+        /// <summary>
+        /// The socket containing the TCP connection this client is using.
+        /// 当前client使用的socket 连接
+        /// </summary>
+        protected Socket _tcpSocket = null;//new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        /// <summary>
+        /// 连接的服务端IP
+        /// </summary>
+        public IPEndPoint ServerEndPoint {
+            get;
+            private set;
+        }
+        /// <summary>
+        /// 当前client socket的连接状态,true连接
+        /// </summary>
+        public bool IsConnected {
+            get { return _tcpSocket != null && _tcpSocket.Connected; }
+        }
+        private bool m_Connected = false;
+        public object UserObject;
         /// <summary>
         /// 当前client接收的字节数
         /// </summary>
@@ -388,17 +357,43 @@ namespace NetIOCPClient
         public uint SentBytes {
             get { return _bytesSent; }
         }
-        /// <summary>
-        /// 当前client socket的连接状态,true连接
-        /// </summary>
-        public bool IsConnected {
-            get { return _tcpSocket != null && _tcpSocket.Connected; }
-        }
-        private bool m_Connected = false;
+
         #endregion
+
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        /// <param name="server">The server this client is connected to.</param>
+        protected NetClientBase(/*ServerBase server*/) {
+            //_server = server;
+            _bufferSegment = Buffers.CheckOut();
+            m_RecivedBuf_Larger = new ByteQueue();//超大包处理
+            //发送分片尺寸
+            SendQueue.CoalesceBufferSize = MaxPacketSize;//BufferSize;
+
+            //下面为默认构造器
+            this.PacketCreatorMgr_Send.RegistePacket((ushort)100, new HeatbeatPacketCreator());
+            this.PacketCreatorMgr_Send.RegistePacket((ushort)101, new TimeSynPacketCreator());
+            this.PacketCreatorMgr_Send.RegistePacket((ushort)99, new CustomPacketCreator());
+            //
+            this.PacketCreatorMgr_Recived.RegistePacket((ushort)100, new HeatbeatPacketCreator());
+            this.PacketCreatorMgr_Recived.RegistePacket((ushort)101, new TimeSynPacketCreator());
+            this.PacketCreatorMgr_Recived.RegistePacket((ushort)99, new CustomPacketCreator());
+            _InitClient();
+        }
+        public NetClientBase(string name)
+            : this() {
+            this.Name = name;
+        }
+        /// <summary>
+        /// 客户端的基本初始化
+        /// </summary>
+        protected abstract void _InitClient();
         public void Close() {
             Dispose();
         }
+
+        #region socket接受数据处理
         /// <summary>
         /// Begins asynchronous TCP receiving for this client.
         /// 开始 异步TCP 接收数据
@@ -440,11 +435,10 @@ namespace NetIOCPClient
             try {
                 int bytesReceived = args.BytesTransferred;
 
-                if (bytesReceived == 0)
-                //if (args.SocketError != SocketError.Success)
-				{ //ToDo:这里可能已经断开连接了
+                if (bytesReceived == 0) {
+                    //ToDo:这里可能已经断开连接了
                     // no bytes means the client disconnected, so clean up!
-                    //_server.DisconnectClient(this, true);
+                    //
                     if (args.SocketError != SocketError.Success) {
                         Logs.Error("网络连接错误.错误码:" + args.SocketError.ToString());
                         this.DisConnect();
@@ -470,7 +464,7 @@ namespace NetIOCPClient
                     }
                     //长度最大为64k
                     ushort needlargeLen = 0;
-                    if (DoReceive(this._bufferSegment, out needlargeLen)) {   //处理完成
+                    if (DoReceive(this._bufferSegment, bytesReceived, out needlargeLen)) {   //处理完成
                         // packet processed entirely
                         _offset = 0;
                         this._bufferSegment.DecrementUsage();//回收
@@ -482,6 +476,7 @@ namespace NetIOCPClient
                         }
                         else {
                             throw new NetException("packet包长度异常");
+                            EnsureBuffer_Larger();//申请新的接收段
                         }
                     }
 
@@ -521,8 +516,7 @@ namespace NetIOCPClient
         /// Makes sure the underlying buffer is big enough (but will never exceed BufferSize)
         /// </summary>
         /// <param name="size"></param>
-        protected void EnsureBuffer() //(int size)
-        {
+        protected void EnsureBuffer() {
             //if (size > BufferSize - _offset)
             {
                 // not enough space left in buffer: Copy to new buffer
@@ -537,7 +531,18 @@ namespace NetIOCPClient
                 _offset = 0;
             }
         }
-
+        protected void EnsureBuffer_Larger() {
+            // not enough space left in buffer: Copy to new buffer
+            var newSegment = Buffers.CheckOut();
+            Array.Copy(_bufferSegment.Buffer.Array,
+                _bufferSegment.Offset + _offset,
+                newSegment.Buffer.Array,
+                newSegment.Offset,
+                _remainingLength);
+            _bufferSegment.DecrementUsage();
+            _bufferSegment = newSegment;
+            _offset = 0;
+        }
         /// <summary>
         /// The buffer containing the data received.
         /// 接收数据片段,默认是8kb
@@ -550,14 +555,15 @@ namespace NetIOCPClient
         /// </summary>
         protected int _offset;
         /// <summary>
-        ///当前_bufferSegment 接受到的长度
+        ///当前_bufferSegment 没有处理的剩下的数据长度
         /// </summary>
         protected int _remainingLength;
+        protected ByteQueue m_RecivedBuf_Larger;
         /// <summary>
         /// Called when a packet has been received and needs to be processed.
         /// </summary>
         /// <param name="numBytes">The size of the packet in bytes.</param>
-        protected virtual bool DoReceive(BufferSegment segment, out ushort needLargeLen) {
+        protected virtual bool DoReceive(BufferSegment segment, int bytesReceived, out ushort needLargeLen) {
             needLargeLen = 0;
             //处理包
             byte[] recvBuffer = segment.Buffer.Array;
@@ -575,7 +581,7 @@ namespace NetIOCPClient
                 ushort packetlen = BitConverter.ToUInt16(recvBuffer, offset + 2);
                 packetFullLength = packetlen + headSize;
                 //判断
-                if (packetFullLength > BufferSize) {//MaxPacketSize
+                if (packetFullLength > BufferSize) {//MaxPacketSize                   
                     //如果包总长度>默认缓存 8K，则需要建立一个新包，用于下次完整的接收包
                     //但是我们的包不可能超过该长度
                     // packet is just too big        
@@ -586,6 +592,21 @@ namespace NetIOCPClient
                         OnRecvError(this, new NetException(string.Format("包:{0} 长度不正常.长度:{1}", packetId, packetFullLength)));
                     }
 
+                    return false;
+                    needLargeLen = (ushort)packetFullLength;
+                    if (this.m_RecivedBuf_Larger.Length == 0) {
+                        this.m_RecivedBuf_Larger.Enqueue(recvBuffer, offset, _remainingLength);//全部压入
+                    }
+                    else {
+                        this.m_RecivedBuf_Larger.Enqueue(recvBuffer, offset + 4, _remainingLength);//头4个字节不压入
+                    }
+                    if (this.m_RecivedBuf_Larger.Length >= packetFullLength) {
+                        //ToDo:处理包
+
+                        //ToDo:把剩余的数据copy出来
+
+                    }
+                    this._remainingLength = 4;//设置为4个字节没有处理 每次都把包头copy到新包内，这里要做压入处理
                     return false;
                 }
                 if (_remainingLength < packetFullLength) {
@@ -646,23 +667,24 @@ namespace NetIOCPClient
             } while (this._remainingLength > 0);
             return true;
         }
-
+        #endregion
 
         #region 基础异步IOCP发送,一般不使用
         /// <summary>
+        /// packet外面自己注意回收,非线程安全
         /// Asynchronously sends a packet of data to the client.
         /// </summary>
         /// <param name="packet">An array of bytes containing the packet to be sent.</param>
-        public void Send(byte[] packet) {
-            Send(packet, 0, packet.Length, false);
+        public void Send(byte[] packet, bool splitDataSent) {
+            Send(packet, 0, packet.Length, splitDataSent);//
         }
         /// <summary>
-        /// segment外面注意自己回收
+        /// segment外面注意自己回收,非线程安全
         /// </summary>
         /// <param name="segment"></param>
         /// <param name="length"></param>
-        private void Send(BufferSegment segment, int length) {
-            Send(segment.Buffer.Array, segment.Offset, length, false);
+        public void Send(BufferSegment segment, int length, bool splitDataSent) {
+            Send(segment.Buffer.Array, segment.Offset, length, splitDataSent);//默认分段模式发送
         }
 
         /// <summary>
@@ -671,10 +693,10 @@ namespace NetIOCPClient
         /// <param name="packet"></param>
         /// <param name="offset"></param>
         /// <param name="length"></param>
-        public void SendCopy(byte[] packet, int offset, int length) {
+        public void SendCopy(byte[] packet, int offset, int length, bool splitDataSent) {
             byte[] copy = new byte[length];
-            Array.Copy(packet, offset, copy, 0, length);
-            Send(copy, 0, copy.Length, false);
+            Array.Copy(packet, offset, copy, 0, length);//这里可能有严重的内存碎片问题
+            Send(copy, 0, copy.Length, splitDataSent);//非分段模式发送
         }
         /// <summary>
         /// Asynchronously sends a packet of data to the client.
@@ -684,28 +706,28 @@ namespace NetIOCPClient
         /// <param name="packet">An array of bytes containing the packet to be sent.</param>
         /// <param name="length">长度大小有限制，不能超64K,如果是分段发送，则没有限制。The number of bytes to send starting at offset.</param>
         /// <param name="offset">The offset into packet where the sending begins.</param>
-        public virtual void Send(byte[] packet, int offset, int length, bool bytesSplit) {
+        public virtual void Send(byte[] packet, int offset, int length, bool splitBytesSent) {
             if (_tcpSocket != null && _tcpSocket.Connected) {
-                if (bytesSplit) {
-                    //分包发送模式
-                    //开始发送
-                    if (OnSend != null) {
-                        OnSend(this, null);
-                    }
-                    SendQueue.Gram gram = null;
-                    gram = m_SendQueueGram.Enqueue(packet, offset, length);//多线程
-                    if (gram == null) {
-                        gram = m_SendQueueGram.CheckFlushReady();//检测是否没有发送完成
-                    }
-                    while (gram != null) {
-                        DoSendBySplit(gram);
-                        gram = m_SendQueueGram.Dequeue();
-                        if (gram == null) {
-                            gram = m_SendQueueGram.CheckFlushReady();//检测是否有小片段没有发送完成
-                        }
-                    }
-                    return;
+                if (splitBytesSent) {
+                    //分包发送模式                    
+                    this.SendBytesBySplitImmediate(packet, offset, length);
                 }
+                else {
+                    this.SendCellBytesImmediate(packet, offset, length);
+                }
+            }
+        } 
+        #endregion
+        
+        #region  数据块立即发送单元
+        /// <summary>
+        /// 立即发送当前单元
+        /// </summary>
+        /// <param name="packet"></param>
+        /// <param name="offset"></param>
+        /// <param name="length"></param>
+        protected void SendCellBytesImmediate(byte[] packet, int offset, int length) {
+            if (_tcpSocket != null && _tcpSocket.Connected) {
                 SocketAsyncEventArgs args = SocketHelpers.AcquireSocketArg();
                 if (args != null) {
                     args.Completed -= SendAsyncComplete;
@@ -747,9 +769,33 @@ namespace NetIOCPClient
             }
         }
         /// <summary>
-        /// 分块发送
+        /// 立即对packet拆分成N个gram发送
         /// </summary>
-        protected void DoSendBySplit(SendQueue.Gram gram) {
+        /// <param name="packet"></param>
+        /// <param name="offset"></param>
+        /// <param name="length"></param>
+        protected void SendBytesBySplitImmediate(byte[] packet, int offset, int length) {
+            //开始发送
+            if (OnSend != null) {
+                OnSend(this, null);
+            }
+            SendQueue.Gram gram = null;
+            gram = m_SendQueueGram.Enqueue(packet, offset, length);//多线程
+            if (gram == null) {
+                gram = m_SendQueueGram.CheckFlushReady();//检测是否没有发送完成
+            }
+            while (gram != null) {
+                this.SendCellBytesGramImmediate(gram);
+                gram = m_SendQueueGram.Dequeue();
+                if (gram == null) {
+                    gram = m_SendQueueGram.CheckFlushReady();//检测是否有小片段没有发送完成
+                }
+            }
+        }
+        /// <summary>
+        /// 立即发送当前单元
+        /// </summary>
+        private void SendCellBytesGramImmediate(SendQueue.Gram gram) {
             if (_tcpSocket != null && _tcpSocket.Connected) {
                 SocketAsyncEventArgs args = SocketHelpers.AcquireSocketArg();
                 if (args != null) {
@@ -788,51 +834,14 @@ namespace NetIOCPClient
                 }
             }
         }
-        protected bool Flush() {
-            if (!IsConnected || !m_SendQueueGram.IsFlushReady) {
-                return false;
-            }
-
-            SendQueue.Gram gram;
-
-            //lock (m_SendQueueGram) {
-            gram = m_SendQueueGram.CheckFlushReady();
-            //}
-
-            if (gram != null) {
-                //m_SendEventArgs.SetBuffer(gram.Buffer, 0, gram.Length);
-                //Send_Start();
-            }
-
-            return false;
-        }
+        #endregion
         /// <summary>
         /// 分段发送列队
         /// </summary>
         protected SendQueue m_SendQueueGram = new SendQueue();
-        #endregion
 
-        #region 基于包Packet列队 异步IOCP模式发送
 
-        /// <summary>
-        /// 把要发送的数据包加入到发送缓存里面,外面保证packet的send buffer segment的尺寸最大不能超过64k
-        /// 如果不加入发送列队，则非线程安全的，经过测试，如果发送不在相同的线程可能会造成发送数据不完全的问题
-        /// </summary>
-        /// <param name="packet"></param>
-        public void Send(Packet packet, bool pendSend) {
 
-            if (IsPrepareModel) {
-                //ToDo:
-            }
-            else {
-                bool canNowSend = (m_SendPackets.Count == 0);
-                m_SendPackets.Enqueue(packet);
-                //如果在此之前，数据空了，那就发一次,这里不能保证线程安全，最好是pendSend==true
-                if (!pendSend && canNowSend) {
-                    PeekPendingPacketToSend();
-                }
-            }
-        }
         /// <summary>
         /// 获取指定ID类型的包，内部数据需要外面去写入,这样有利于包的重复利用以及
         /// 节约反复内存申请的开支
@@ -844,7 +853,7 @@ namespace NetIOCPClient
             PacketCreator creator = this.PacketCreatorMgr_Recived.GetPacketCreator(packetId);
             if (creator == null) {
                 Debug.Assert(false, string.Format("未注册的包类型.packetId:{0} ", packetId));
-                Logs.Error(string.Format("不存在相应的包构造器.packetId:{0} ", packetId));
+                Logs.Warn(string.Format("不存在相应的包构造器.packetId:{0} ", packetId));
             }
             else {
                 //接收包处理
@@ -876,7 +885,7 @@ namespace NetIOCPClient
             PacketCreator creator = this.PacketCreatorMgr_Send.GetPacketCreator(packetId);
             if (creator == null) {
                 Debug.Assert(false, string.Format("未注册的包类型.packetId:{0} ", packetId));
-                Logs.Error(string.Format("不存在相应的包构造器.packetId:{0} ", packetId));
+                Logs.Warn(string.Format("不存在相应的包构造器.packetId:{0} ", packetId));
             }
             else {
 #if DEBUG
@@ -904,11 +913,76 @@ namespace NetIOCPClient
                 this.m_SendPackets.Enqueue(v);
             }
         }
+
+        #region 基于包Packet列队 异步IOCP模式发送
+
         /// <summary>
-        /// 即时异步发送数据包
+        /// 把要发送的数据包加入到发送缓存里面,外面保证packet的send buffer segment的尺寸最大不能超过64k
+        /// 如果不加入发送列队，则非线程安全的，经过测试，如果发送不在相同的线程可能会造成发送数据不完全的问题
         /// </summary>
         /// <param name="packet"></param>
-        protected void SendPacketImmediate(Packet packetdata) {
+        public void Send(Packet packet, bool pendSend) {
+
+            if (IsPrepareModel) {
+                //ToDo:包数据前面补一段数据，但是基于TCP的连接是没有必要了
+            }
+            else {
+                bool canNowSend = (m_SendPackets.Count == 0);
+                m_SendPackets.Enqueue(packet);
+                //如果在此之前，数据空了，那就发一次,这里不能保证线程安全，最好是pendSend==true
+                if (!pendSend && canNowSend) {
+                    PeekPendingPacketToSend();
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// 发送包列队
+        /// </summary>
+        NetQueue<Packet> m_SendPackets = new NetQueue<Packet>(1024);
+        /// <summary>
+        /// 接收包列队
+        /// </summary>
+        NetQueue<Packet> m_RecivePackets = new NetQueue<Packet>(1024);
+        protected void PeekPendingPacketToSend() {
+            if (m_IsClosed || !m_Connected)
+                return;
+            if (m_SendPackets.Count > 0) {
+                Packet packet = null;
+                bool dout = m_SendPackets.TryDequeue(out packet);
+                if (dout && packet != null) {
+                    if (IsPacketMode) {
+                        //包模式发送,对数据大小有限制，WIN系统最大一次能发送96K，我们这里要求不能超过64K
+                        SendCellPacketImmediate(packet);
+                    }
+                    else {
+                        //数据数组分成N个指定长度的byte[]发送，可发送大文件
+                        //分数据段发送
+                        if (this.IsPrepareModel) {
+                            //ToDo:填补数据
+                        }
+                        //byte[] buf = new byte[packet.PacketBufLen];
+                        //packet.Buffer.CopyToBytes(0, buf, 0, buf.Length); 
+                        //分段发送                        
+                        this.SendBytesBySplitImmediate(packet.Buffer.Buffer.Array, packet.Buffer.Offset, packet.PacketBufLen);//把数据copy到分段发送列队内
+                        //packet回收
+                        if (packet.IsComeFromPacketCreate) {
+                            //回收包,以便重复利用   
+                            packet.Token = null;//取消关联
+                            this.PacketCreatorMgr_Send.GetPacketCreator(packet.PacketID).RecylePacket(packet);
+                        }
+
+                    }
+                }
+            }
+        }
+        /// <summary>
+        /// 即时异步发送packet单元,对packet包关联的数据大小有限制，最大一个packet的数据长度不能超过64k,服务端发送不能超过8K
+        /// 我们一般没有这么大的包。据经验 不超过8K的包处理效率较高
+        /// </summary>
+        /// <param name="packet"></param>
+        protected void SendCellPacketImmediate(Packet packetdata) {
             if (_tcpSocket != null && _tcpSocket.Connected) {
                 SocketAsyncEventArgs args = SocketHelpers.AcquireSocketArg();
                 if (args != null) {
@@ -918,6 +992,9 @@ namespace NetIOCPClient
                     args.Completed -= SendAsyncComplete;
                     args.Completed += SendAsyncComplete;
                     //packet关联的数据段 大小应该有限制的
+                    if (this.IsPrepareModel) {
+                        //ToDo:前面填补数据
+                    }
                     args.SetBuffer(packet, offset, length);
                     packetdata.Token = this;//可能使用的
                     args.UserToken = packetdata;//发送完即可回收包
@@ -963,42 +1040,6 @@ namespace NetIOCPClient
                 Logs.Error(string.Format("Client {0} is null or not connect_{1}", this.Name, this.IsConnected));
             }
         }
-
-        /// <summary>
-        /// 发送包列队
-        /// </summary>
-        NetQueue<Packet> m_SendPackets = new NetQueue<Packet>(1024);
-        /// <summary>
-        /// 接收包列队
-        /// </summary>
-        NetQueue<Packet> m_RecivePackets = new NetQueue<Packet>(1024);
-        protected void PeekPendingPacketToSend() {
-            if (m_IsClosed || !m_Connected)
-                return;
-            if (m_SendPackets.Count > 0) {
-                Packet packet = null;
-                bool dout = m_SendPackets.TryDequeue(out packet);
-                if (dout && packet != null) {
-                    if (IsPacketMode) {
-                        //包模式发送
-                        SendPacketImmediate(packet);
-                    }
-                    else {
-                        //数据数组模式发送
-                        //分数据段发送
-                        byte[] buf = new byte[packet.PacketBufLen];
-                        packet.Buffer.CopyToBytes(0, buf, 0, buf.Length);
-                        //packet回收
-                        if (packet.IsComeFromPacketCreate) {
-                            //回收包,以便重复利用   
-                            packet.Token = null;//取消关联
-                            this.PacketCreatorMgr_Send.GetPacketCreator(packet.PacketID).RecylePacket(packet);
-                        }
-                        Send(buf, 0, buf.Length, true);//分段发送
-                    }
-                }
-            }
-        }
         /// <summary>
         /// 每一帧中处理的包数量上限
         /// </summary>
@@ -1016,11 +1057,15 @@ namespace NetIOCPClient
             int pp1f = 0;
             while (m_SendPackets.Count > 0) {
                 pp1f++;
+                pp1f += (this.IsPacketMode ? 0 : 10);
                 if (pp1f >= ProcessPacketCountInOneFrame) {
                     break;//每次最大发送数量
                 }
                 //对处理速度限制
                 PeekPendingPacketToSend();
+            }
+            if (!IsPacketMode) {
+                //分段发送
             }
             //对接收包处理
             while (m_RecivePackets.Count > 0) {
@@ -1161,13 +1206,13 @@ namespace NetIOCPClient
         //    }
         //}
 
-        #region
+        #region  connet and disconnect
 
         /// <summary>
         /// 接收数据上下文对象
         /// </summary>
-        internal SocketAsyncEventArgs ConnectEventArgs { get; private set; }
-        void OnConnectCompleted(object sender, SocketAsyncEventArgs e) {
+        protected SocketAsyncEventArgs ConnectEventArgs { get; private set; }
+        private void OnConnectCompleted(object sender, SocketAsyncEventArgs e) {
             isBeginConnect = false;
             Socket Socket = _tcpSocket;
             if (e.SocketError != SocketError.Success) {
@@ -1212,10 +1257,7 @@ namespace NetIOCPClient
 
         private bool isBeginConnect = false;
         private bool m_IsClosed = false;
-        public IPEndPoint ServerEndPoint {
-            get;
-            private set;
-        }
+
         /// <summary>
         /// 先服务器发起一个连接
         /// 这是一个异步方法
@@ -1275,6 +1317,28 @@ namespace NetIOCPClient
             }
         }
         /// <summary>
+        /// Connects the client to the server at the specified address and port.
+        /// </summary>
+        /// <remarks>This function uses IPv4.</remarks>
+        /// <param name="addr">The IP address of the server to connect to.</param>
+        /// <param name="port">The port to use when connecting to the server.</param>
+        [Obsolete()]
+        public bool Connect(IPAddress addr, int port) {
+            bool connect = false;
+            if (_tcpSocket != null) {
+                if (_tcpSocket.Connected) {
+                    _tcpSocket.Disconnect(true);
+                }
+               _tcpSocket.Connect(addr, port);
+                connect = _tcpSocket.Connected;
+                this.m_Connected = connect;
+                if (connect) {
+                    BeginReceive();
+                }
+            }
+            return connect;
+        }
+        /// <summary>
         /// 初始化
         /// </summary>
         private void _InitSocket() {
@@ -1289,14 +1353,15 @@ namespace NetIOCPClient
             if (this._bufferSegment != null) {
                 this._bufferSegment.DecrementUsage();//回收
             }
-            this._bufferSegment = Buffers.CheckOut();//获取新的片段           
+            this._bufferSegment = Buffers.CheckOut();//获取新的片段    
+            m_RecivedBuf_Larger = new ByteQueue();
         }
 
         /// <summary>
         /// 客户端主动立即与服务器断开连接
         /// </summary>
         public void DisConnect() {
-            Status = ClientNetworkStatus.DisConnected;
+            Status = ClientNetworkStatus.BeginDisConnect;
             if (_tcpSocket != null) {
                 if (_tcpSocket.Connected) {
                     try {
@@ -1319,6 +1384,7 @@ namespace NetIOCPClient
                 //
                 ClearSendAndRecivedQuene();
             }
+            Status = ClientNetworkStatus.DisConnected;
             if (OnDisconnect != null) {
                 OnDisconnect(this, EventArgs.Empty);
             }
@@ -1344,8 +1410,10 @@ namespace NetIOCPClient
             m_SendQueueGram.Clear();
             //_bufferSegment.DecrementUsage();
             //_bufferSegment =null;
+            m_RecivedBuf_Larger.Clear();
         }
         #endregion
+
         #region IDisposable
 
         ~NetClientBase() {
@@ -1364,7 +1432,7 @@ namespace NetIOCPClient
             ClearSendAndRecivedQuene();
             _bufferSegment.DecrementUsage();
             _bufferSegment = null;
-
+            m_RecivedBuf_Larger = null;
             if (_tcpSocket != null) {
                 try {
                     if (_tcpSocket.Connected) {

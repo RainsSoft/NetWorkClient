@@ -26,6 +26,7 @@ namespace NetIOCPClient.NetWork
         protected abstract void _initPacketPool();
         /// <summary>
         /// 创建的 与回收的 packetid必须一样，通过ID来关联创建器与 packet对象
+        /// 自动回收Packet.Buffer以及清理packet的内部关联数据
         /// </summary>
         /// <param name="p"></param>
         public abstract void RecylePacket(Packet p);//{

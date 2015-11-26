@@ -310,7 +310,7 @@ namespace NetIOCPClient.Log
         /// 添加一个调试的适配器输出
         /// </summary>
         public static void AddDebugAppender() {
-            AddAppender(new ConsoleAppender());
+            AddAppender(new DebugAppender());
         }
     }
 }

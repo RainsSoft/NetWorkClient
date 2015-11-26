@@ -298,7 +298,7 @@ namespace NetIOCPClient.NetWork.Data
     public sealed class CapacityExceededException : Exception
     {
         public CapacityExceededException()
-            : base("send Qunene: Too much data pending.") {
+            : base("send Queue: Too much data pending.") {
         }
     }
 
