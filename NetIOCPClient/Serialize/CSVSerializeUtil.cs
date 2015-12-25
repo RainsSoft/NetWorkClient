@@ -23,21 +23,21 @@ namespace NetIOCPClient.Serialize
         /// <param name="type"></param>
         /// <returns></returns>
         public static object CSVDeserialize(this string csvStr, Type type) {
-            MemoryStream stream = new MemoryStream();
-            var bytes = Encoding.UTF8.GetBytes(csvStr);
-            stream.Write(bytes, 0, bytes.Length);
-            stream.Position = 0;
+            //MemoryStream stream = new MemoryStream();
+            byte[] bytes = Encoding.UTF8.GetBytes(csvStr);
+            //stream.Write(bytes, 0, bytes.Length);
+            //stream.Position = 0;
 
-            return CSVDeserialize(type, stream);
+            return CSVDeserialize(type, bytes);
         }
 
         /// <summary>
         /// 当前正在处理的列
         /// </summary>
         public static int CurrentLine = 0;
-
-        static object CSVDeserialize(Type type, Stream stream) {
-            var csvReader = new CsvFileReader(stream);
+        static object CSVDeserialize(Type type, byte[] stream) {
+            var csvReader = new CsvFileReader(stream, EmptyLineBehavior.NoColumns);
+            
             List<string> head = new List<string>();
             csvReader.ReadRow(head); //  先读取头信息，用来做反射
             ArrayList ret = new ArrayList();
@@ -215,7 +215,8 @@ namespace NetIOCPClient.Serialize
         /// <returns></returns>
         public static T[] CSVDeserializeFile<T>(this string csvFileName) where T : class, new() {
             using (Stream fileStream = new FileStream(csvFileName, FileMode.Open, FileAccess.Read)) {
-                return CSVDeserialize(typeof(T), fileStream) as T[];
+                byte[]buf=new byte[fileStream.Length];
+                return CSVDeserialize(typeof(T), buf) as T[];
             }
         }
 
@@ -339,7 +340,6 @@ namespace NetIOCPClient.Serialize
             return new StreamReader(stream).ReadToEnd();
         }
     }
-
     /// <summary>
     /// 给一个csv的列定义一个别名
     /// </summary>
