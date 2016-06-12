@@ -16,7 +16,52 @@ namespace NetIOCPClient.NetWork
     /// </summary>
     public abstract class PacketBase : INETPacket, IClearPacketContent
     {
-
+        /*
+public	static 	ushort 	PKG_MARK    	=	0xAAEE;
+	public	static 	int		HEADER_LENGTH	=	14;
+	public	static	int		DATA_LEN_OFFSET	=	4;
+	public	static	int		MSG_OFFSET		=	8;
+	public	class SGTMsgHeader
+	{
+		public	ushort	wCheckSum;  //校验码		=(wDataLen ^ 0xBBCC) & 0x88AA;
+		public	ushort	wMark;      //包头标示	=PKG_MARK
+		public	ushort	wDataLen;   //数据包长度	=SGTMsgHeader+SGSMsgHeader+Data
+		public	byte	byFlags;	//			=0
+		public	byte	byOptLen;	//			=0
+		public	ushort  wMsgID; 	// 协议ID
+		public	uint	dwTransID; 	// 传输ID	=0
+		public	SGTMsgHeader()
+		{
+			wCheckSum	=	0;
+			wMark		=	PKG_MARK;
+			wDataLen	=	0;
+			byFlags		=	0;
+			byOptLen	=	0;
+			wMsgID		=	0;
+			dwTransID	=	0;
+		}
+		public	void	Encode(CNetData data)
+		{
+			data.Add(wCheckSum);
+			data.Add(wMark);
+			data.Add(wDataLen);
+			data.Add(byFlags);
+			data.Add(byOptLen);
+			data.Add(wMsgID);
+			data.Add(dwTransID);
+		}
+		public	void	Decode(CNetData data)
+		{
+			data.Del(ref wCheckSum);
+			data.Del(ref wMark);
+			data.Del(ref wDataLen);
+			data.Del(ref byFlags);
+			data.Del(ref byOptLen);
+			data.Del(ref wMsgID);
+			data.Del(ref dwTransID);
+		}
+	}
+	*/
         /// <summary>
         /// 关联片段
         /// </summary>        
